@@ -1,17 +1,17 @@
 // ===================================
 // CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
 // ===================================
-const SHEET_ID = '1r6NLcVkVLD5vp4UxPEa7TcreBpOd0qeNt-QREOG4Xr4';
+const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
 
-// ✅ CONFIGURAÇÃO DAS DUAS ABAS
+// ✅ CONFIGURAÇÃO DAS DUAS ABAS - VARGEM DAS FLORES
 const SHEETS = [
     {
-        name: 'PENDÊNCIAS ELDORADO',
-        url: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('PENDÊNCIAS ELDORADO')}`
+        name: 'PENDÊNCIAS VARGEM DAS FLORES',
+        url: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=278071504`
     },
     {
         name: 'RESOLVIDOS',
-        url: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('RESOLVIDOS')}`
+        url: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=451254610`
     }
 ];
 
@@ -1113,5 +1113,5 @@ function downloadExcel() {
     ];
 
     const hoje = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
+    XLSX.writeFile(wb, `Dados_Vargem_das_Flores_${hoje}.xlsx`);
 }
