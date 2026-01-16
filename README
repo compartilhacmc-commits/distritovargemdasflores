@@ -1,0 +1,35 @@
+Painel de Controle - Sistema Vivver
+📋 Descrição
+Painel automatizado para controle de pendências e solicitações do Sistema Vivver - Central de Marcação de Consultas.
+
+Desenvolvido por: Ana P. A. Silva - Matrícula 201704
+Diretoria de Regulação - CEAPS
+
+✨ Funcionalidades
+🎯 Principais Recursos
+✅ Atualização automática de dados do Google Sheets
+🔍 Filtros inteligentes por Unidade, Especialidade e Status
+📊 Cards informativos com totais e porcentagens
+📈 Gráficos interativos de barras e pizza
+📅 Análise de prazos (15 e 30 dias)
+📥 Exportação para Excel com filtros aplicados
+📱 Design responsivo e moderno
+🎨 Interface atraente com cores personalizadas
+📊 Visualizações
+Cards de Resumo
+
+Total de pendências
+Pendências vencendo em 15 dias
+Pendências vencendo em 30 dias
+Total de registros filtrados
+Gráficos
+
+Gráfico de barras: Pendências por Unidade de Saúde (azul)
+Gráfico de barras: Pendências por Especialidade (verde)
+Gráfico de pizza: Análise de prazos
+Tabela Detalhada
+
+Visualização completa dos dados filtrados
+Informações: Nº Solicitação, Datas, Prontuário, Telefone, Unidade, Especialidade, Status
+
+
