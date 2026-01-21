@@ -42,8 +42,8 @@ let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
 
-// ✅ novo gráfico ao lado da pizza
-let chartTopUnidadesResolvem = null;
+// ✅ NOVO: gráfico de evolução temporal
+let chartEvolucaoTemporal = null;
 
 // ===================================
 // FUNÇÃO AUXILIAR PARA BUSCAR VALOR DE COLUNA
@@ -559,14 +559,13 @@ function updateCharts() {
   const statusLabels = Object.keys(statusCount).sort((a, b) => statusCount[b] - statusCount[a]);
   const statusValues = statusLabels.map(label => statusCount[label]);
 
-  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
 
   // Pizza
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
 
-  // ✅ Novo gráfico ao lado: Top 5 Unidades que mais resolvem (somente RESOLVIDOS)
-  createTopUnidadesQueMaisResolvemChart('chartTopUnidadesResolvem');
+  // ✅ NOVO: Evolução Temporal de Pendências por Mês
+  createEvolucaoTemporalChart('chartEvolucaoTemporal');
 
   // Pendências por Prestador
   const prestadorCount = {};
@@ -581,7 +580,6 @@ function updateCharts() {
     .slice(0, 50);
   const prestValues = prestLabels.map(l => prestadorCount[l]);
 
-  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
   // Pendências por Mês
@@ -612,7 +610,6 @@ function updateCharts() {
     .slice(0, 50);
   const mesValues = mesLabels.map(l => mesCount[l]);
 
-  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 }
 
@@ -713,8 +710,6 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
         backgroundColor: color,
         borderWidth: 0,
         borderRadius: 6,
-
-        // ✅ MAIS LARGO (pedido)
         barPercentage: 0.92,
         categoryPercentage: 0.92,
         maxBarThickness: 58
@@ -794,8 +789,6 @@ function createVerticalBarChart(canvasId, labels, data, color) {
         backgroundColor: color,
         borderWidth: 0,
         borderRadius: 6,
-
-        // ✅ MAIS LARGO (pedido)
         barPercentage: 0.90,
         categoryPercentage: 0.90,
         maxBarThickness: 52
@@ -855,98 +848,118 @@ function createVerticalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ NOVO: TOP 5 UNIDADES QUE MAIS RESOLVEM (somente aba RESOLVIDOS)
+// ✅ NOVO: GRÁFICO DE EVOLUÇÃO TEMPORAL (LINHA + ÁREA)
 // ===================================
-function createTopUnidadesQueMaisResolvemChart(canvasId) {
+function createEvolucaoTemporalChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
-  if (chartTopUnidadesResolvem) chartTopUnidadesResolvem.destroy();
+  if (chartEvolucaoTemporal) chartEvolucaoTemporal.destroy();
 
-  const unidadeResolveCount = {};
+  // Agregar dados por mês (somente pendências)
+  const mesCountMap = {};
 
   filteredData.forEach(item => {
-    if (!isOrigemResolvidos(item)) return;   // ✅ só RESOLVIDOS
-    if (!isPendenciaByUsuario(item)) return; // mantém sua regra
+    if (!isPendenciaByUsuario(item)) return;
 
-    const unidade = item['Unidade Solicitante'] || 'Não informado';
-    unidadeResolveCount[unidade] = (unidadeResolveCount[unidade] || 0) + 1;
+    const dataInicio = parseDate(getColumnValue(item, [
+      'Data Início da Pendência',
+      'Data Inicio da Pendencia',
+      'Data Início Pendência',
+      'Data Inicio Pendencia'
+    ]));
+
+    if (dataInicio) {
+      const mesAno = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, '0')}`;
+      mesCountMap[mesAno] = (mesCountMap[mesAno] || 0) + 1;
+    }
   });
 
-  const pairs = Object.keys(unidadeResolveCount)
-    .map(u => ({ label: u, value: unidadeResolveCount[u] }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
+  // Ordenar cronologicamente
+  const mesesOrdenados = Object.keys(mesCountMap).sort();
+  
+  const labels = mesesOrdenados.map(mesAno => {
+    const [ano, mes] = mesAno.split('-');
+    const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+    return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+  });
 
-  const labels = pairs.map(p => p.label);
-  const values = pairs.map(p => p.value);
+  const values = mesesOrdenados.map(mesAno => mesCountMap[mesAno]);
 
-  const hasData = values.reduce((s, v) => s + v, 0) > 0;
+  const hasData = values.length > 0 && values.reduce((s, v) => s + v, 0) > 0;
 
-  chartTopUnidadesResolvem = new Chart(ctx, {
-    type: 'bar',
+  chartEvolucaoTemporal = new Chart(ctx, {
+    type: 'line',
     data: {
-      labels: hasData ? labels : ['Sem dados (RESOLVIDOS)'],
+      labels: hasData ? labels : ['Sem dados'],
       datasets: [{
-        label: 'Resolvidos',
+        label: 'Pendências Registradas',
         data: hasData ? values : [0],
-        backgroundColor: hasData ? '#10b981' : 'rgba(16,185,129,0.25)',
-        borderWidth: 0,
-        borderRadius: 6,
-        barPercentage: 0.85,
-        categoryPercentage: 0.90
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249, 115, 22, 0.15)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#f97316',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
       }]
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: { size: 13, weight: 'bold' },
+            color: '#1f2937',
+            padding: 15,
+            usePointStyle: true
+          }
+        },
         tooltip: {
           enabled: hasData,
           backgroundColor: 'rgba(0,0,0,0.85)',
           titleFont: { size: 14, weight: 'bold' },
           bodyFont: { size: 13 },
           padding: 12,
-          cornerRadius: 8
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              return `Pendências: ${context.parsed.y}`;
+            }
+          }
         }
       },
       scales: {
         x: {
-          beginAtZero: true,
-          ticks: { font: { size: 12, weight: '600' }, color: '#4a5568' },
-          grid: { color: 'rgba(0,0,0,0.06)' }
+          ticks: { 
+            font: { size: 11, weight: '600' }, 
+            color: '#4a5568',
+            maxRotation: 45,
+            minRotation: 25
+          },
+          grid: { display: false }
         },
         y: {
-          ticks: { font: { size: 12, weight: '600' }, color: '#4a5568' },
-          grid: { display: false }
+          beginAtZero: true,
+          ticks: { 
+            font: { size: 12, weight: '600' }, 
+            color: '#4a5568',
+            precision: 0
+          },
+          grid: { color: 'rgba(0,0,0,0.06)' }
         }
+      },
+      interaction: {
+        mode: 'index',
+        intersect: false
       }
-    },
-    plugins: [{
-      id: 'valueLabelTopUnidadesResolvem',
-      afterDatasetsDraw(chart) {
-        if (!hasData) return;
-
-        const { ctx } = chart;
-        const meta = chart.getDatasetMeta(0);
-        const dataset = chart.data.datasets[0];
-
-        ctx.save();
-        ctx.fillStyle = '#111827';
-        ctx.font = 'bold 13px Arial';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-
-        meta.data.forEach((bar, i) => {
-          const value = dataset.data[i];
-          ctx.fillText(String(value), bar.x + 8, bar.y);
-        });
-
-        ctx.restore();
-      }
-    }]
+    }
   });
 }
 
