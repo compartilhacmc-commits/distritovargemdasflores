@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Controle - Distrito Sanitário Vargem das Flores</title>
+    <title>Painel de Controle - Distrito Sanitário Eldorado</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,8 +13,8 @@
         <div class="header-content">
             <h1 class="header-title">DIRETORIA DE REGULAÇÃO</h1>
             <h2 class="header-subtitle">Controle de Pendências - Sistema Vivver</h2>
-            <h3 class="header-subtitle">Central de Marcação de Consultas / Distrito Vargem das Flores</h3>
-            <p class="footer-credits">Referência Giovanna - Marcadora Carolina Telefone - 3198-6758</p>
+            <h3 class="header-subtitle">Central de Marcação de Consultas / Distrito Sanitário Ressaca</h3>
+            <p class="footer-credits">Referência Giovanna - Marcadora Graziela Telefone - 3198-6772</p>
             <p class="footer-credits">Página Criada por Ana P. A. Silva Matr:201704/Assistente Adm. Diretoria de Regulação - Ceaps</p>
         </div>
     </header>
@@ -136,12 +136,16 @@
                     </div>
                 </div>
 
-                <!-- ✅ FILTRO POR MÊS -->
+                <!-- FILTRO POR MÊS -->
                 <div class="filter-box">
                     <label>Filtrar por Mês:</label>
-                    <select class="filter-select" id="filterMes" onchange="applyFilters()">
-                        <option value="">Todos os Meses</option>
-                    </select>
+                    <div class="multi-select" id="msMes">
+                        <button type="button" class="multi-select-btn" onclick="toggleMultiSelect('msMes')">
+                            <span class="multi-select-text" id="msMesText">Todos os Meses</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="multi-select-panel" id="msMesPanel"></div>
+                    </div>
                 </div>
             </div>
 
@@ -150,17 +154,26 @@
             </button>
         </div>
 
-        <!-- Gráficos -->
+        <!-- Gráficos (ORDEM ALTERADA) -->
         <div class="charts-container">
+            <!-- LINHA 1 -->
             <div class="chart-box">
-                <h3 class="chart-title">Registros por Unidade de Saúde</h3>
+                <h3 class="chart-title">Registros Geral de Pendências por Unidade de Saúde</h3>
                 <div class="chart-wrapper">
                     <canvas id="chartUnidades"></canvas>
                 </div>
             </div>
 
             <div class="chart-box">
-                <h3 class="chart-title">Registros por Especialidade</h3>
+                <h3 class="chart-title">Pendências Não Resolvidas por Unidade de Saúde</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartPendenciasNaoResolvidasUnidade"></canvas>
+                </div>
+            </div>
+
+            <!-- LINHA 2 -->
+            <div class="chart-box">
+                <h3 class="chart-title">Registros Geral de Pendências por Especialidade</h3>
                 <div class="chart-wrapper">
                     <canvas id="chartEspecialidades"></canvas>
                 </div>
@@ -173,15 +186,7 @@
                 </div>
             </div>
 
-            <!-- GRÁFICO DE PIZZA -->
-            <div class="chart-box">
-                <h3 class="chart-title">Distribuição Percentual por Status</h3>
-                <div class="chart-wrapper chart-wrapper-pizza">
-                    <canvas id="chartPizzaStatus"></canvas>
-                </div>
-            </div>
-
-            <!-- ✅ NOVO: PENDÊNCIAS POR PRESTADOR (VERTICAL) -->
+            <!-- LINHA 3 -->
             <div class="chart-box">
                 <h3 class="chart-title">Quantidade de Pendências por Prestador</h3>
                 <div class="chart-wrapper">
@@ -189,11 +194,33 @@
                 </div>
             </div>
 
-            <!-- ✅ NOVO: PENDÊNCIAS POR MÊS (VERTICAL) -->
             <div class="chart-box">
                 <h3 class="chart-title">Quantidade de Pendências por Mês</h3>
                 <div class="chart-wrapper">
                     <canvas id="chartPendenciasMes"></canvas>
+                </div>
+            </div>
+
+            <!-- LINHA 4 -->
+            <div class="chart-box">
+                <h3 class="chart-title">Estatística de Resolutividade por Unidade de Saúde</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartResolutividadeUnidade"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <h3 class="chart-title">Estatística de Resolutividade por Prestador</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartResolutividadePrestador"></canvas>
+                </div>
+            </div>
+
+            <!-- LINHA 5 - PIZZA (FULL WIDTH) -->
+            <div class="chart-box chart-box-full">
+                <h3 class="chart-title">Distribuição Percentual por Status</h3>
+                <div class="chart-wrapper chart-wrapper-pizza">
+                    <canvas id="chartPizzaStatus"></canvas>
                 </div>
             </div>
         </div>
@@ -249,8 +276,8 @@
     <footer class="footer">
         <p>DIRETORIA DE REGULAÇÃO</p>
         <p>CENTRAL DE MARCAÇÃO DE CONSULTAS</p>
-        <p>DISTRITO SANITÁRIO VARGEM DAS FLORES</p>
-        <p>Telefone 3198-6758 Marcadora Carolina</p>
+        <p>DISTRITO SANITÁRIO RESSACA</p>
+        <p>Telefone 3198-6772 Marcadora Graziela</p>
         <p class="footer-credits">Página Criada por Ana P. A. Silva Matr:201704/Assistente Adm. Diretoria de Regulação - Ceaps</p>
     </footer>
 
@@ -267,3 +294,8 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+
+
+
+
