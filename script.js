@@ -1,17 +1,27 @@
 // ===================================
 // CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
 // ===================================
+
+// ID da planilha (mantido)
 const SHEET_ID = '1lMGO9Hh_qL9OKI270fPL7lxadr-BZN9x_ZtmQeX6OcA';
 
-// ✅ CONFIGURAÇÃO DAS DUAS ABAS - NOVOS LINKS DISTRITO NACIONAL
+// ✅ IMPORTANTE:
+// Para carregar dados via fetch no GitHub Pages, use SEMPRE o endpoint de exportação CSV.
+// Formato:
+// https://docs.google.com/spreadsheets/d/ID/export?format=csv&gid=GID
+
+const SPREADSHEET_ID_REAL = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
+
 const SHEETS = [
     {
         name: 'PENDÊNCIAS VARGEM DAS FLORES',
-        url: `https://docs.google.com/spreadsheets/d/1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk/edit?pli=1&gid=278071504#gid=278071504`
+        gid: '278071504',
+        url: `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID_REAL}/export?format=csv&gid=278071504`
     },
     {
         name: 'RESOLVIDOS',
-        url: `https://docs.google.com/spreadsheets/d/1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk/edit?pli=1&gid=451254610#gid=451254610`
+        gid: '451254610',
+        url: `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID_REAL}/export?format=csv&gid=451254610`
     }
 ];
 
@@ -30,14 +40,33 @@ let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
 
 // ===================================
-// FUNÇÃO AUXILIAR PARA BUSCAR VALOR DE COLUNA
+// FUNÇÕES DE NORMALIZAÇÃO (para não quebrar com variação de cabeçalho)
 // ===================================
-function getColumnValue(item, possibleNames, defaultValue = '-') {
-    for (let name of possibleNames) {
-        if (item.hasOwnProperty(name) && item[name]) {
-            return item[name];
+function normalizeKey(str) {
+    return String(str || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // remove acentos
+        .replace(/\s+/g, ' ');
+}
+
+function getValueByHeaderAliases(item, aliases, defaultValue = '-') {
+    // Tenta direto primeiro (rápido)
+    for (const a of aliases) {
+        if (Object.prototype.hasOwnProperty.call(item, a) && item[a] !== '' && item[a] != null) return item[a];
+    }
+
+    // Tenta por normalização (robusto)
+    const wanted = aliases.map(normalizeKey);
+    for (const key of Object.keys(item)) {
+        const nk = normalizeKey(key);
+        if (wanted.includes(nk)) {
+            const v = item[key];
+            if (v !== '' && v != null) return v;
         }
     }
+
     return defaultValue;
 }
 
@@ -45,7 +74,7 @@ function getColumnValue(item, possibleNames, defaultValue = '-') {
 // ✅ REGRA DE PENDÊNCIA: COLUNA "USUÁRIO" PREENCHIDA
 // ===================================
 function isPendenciaByUsuario(item) {
-    const usuario = getColumnValue(item, ['Usuário', 'Usuario', 'USUÁRIO', 'USUARIO'], '');
+    const usuario = getValueByHeaderAliases(item, ['Usuário', 'Usuario', 'USUÁRIO', 'USUARIO'], '');
     return !!(usuario && String(usuario).trim() !== '');
 }
 
@@ -135,13 +164,13 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadData() {
     showLoading(true);
     allData = [];
-    
-    try {
-        console.log('Carregando dados das duas abas...');
 
-        // ✅ CARREGAR AS DUAS ABAS EM PARALELO
-        const promises = SHEETS.map(sheet => 
-            fetch(sheet.url)
+    try {
+        console.log('Carregando dados das duas abas (CSV export)...');
+        console.log('Planilhas:', SHEETS.map(s => s.url));
+
+        const promises = SHEETS.map(sheet =>
+            fetch(sheet.url, { cache: 'no-store' })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Erro HTTP na aba "${sheet.name}": ${response.status}`);
@@ -149,31 +178,35 @@ async function loadData() {
                     return response.text();
                 })
                 .then(csvText => {
-                    console.log(`Dados CSV da aba "${sheet.name}" recebidos`);
+                    // Se por algum motivo vier HTML (planilha não pública), acusar cedo
+                    const head = csvText.slice(0, 200).toLowerCase();
+                    if (head.includes('<html') || head.includes('<!doctype')) {
+                        throw new Error(`A aba "${sheet.name}" não retornou CSV. Verifique se a planilha está pública e o link é export?format=csv&gid=...`);
+                    }
+                    console.log(`CSV recebido da aba "${sheet.name}" (${csvText.length} chars)`);
                     return { name: sheet.name, csv: csvText };
                 })
         );
 
         const results = await Promise.all(promises);
 
-        // ✅ PROCESSAR CADA ABA
         results.forEach(result => {
             const rows = parseCSV(result.csv);
 
-            if (rows.length < 2) {
+            if (!rows || rows.length < 2) {
                 console.warn(`Aba "${result.name}" está vazia ou sem dados`);
                 return;
             }
 
-            const headers = rows[0];
+            const headers = rows[0].map(h => String(h || '').trim());
             console.log(`Cabeçalhos da aba "${result.name}":`, headers);
 
             const sheetData = rows.slice(1)
-                .filter(row => row.length > 1 && row[0])
+                .filter(row => row && row.length > 0 && String(row.join('')).trim() !== '')
                 .map(row => {
-                    const obj = { _origem: result.name }; // ✅ Marca a origem dos dados
+                    const obj = { _origem: result.name };
                     headers.forEach((header, index) => {
-                        obj[header.trim()] = (row[index] || '').trim();
+                        obj[header] = (row[index] || '').trim();
                     });
                     return obj;
                 });
@@ -183,10 +216,10 @@ async function loadData() {
         });
 
         console.log(`Total de registros carregados (ambas as abas): ${allData.length}`);
-        console.log('Primeiro registro completo:', allData[0]);
+        console.log('Primeiro registro:', allData[0]);
 
         if (allData.length === 0) {
-            throw new Error('Nenhum dado foi carregado das planilhas');
+            throw new Error('Nenhum dado foi carregado das planilhas (CSV).');
         }
 
         filteredData = [...allData];
@@ -194,20 +227,40 @@ async function loadData() {
         populateFilters();
         updateDashboard();
 
-        console.log('Dados carregados com sucesso!');
+        console.log('Dados carregados e painel atualizado com sucesso!');
 
     } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        alert(`Erro ao carregar dados da planilha: ${error.message}\n\nVerifique:\n1. As planilhas estão públicas?\n2. Os nomes das abas estão corretos?\n3. Há dados nas planilhas?`);
+        alert(
+            `Erro ao carregar dados da planilha: ${error.message}\n\n` +
+            `Verifique:\n` +
+            `1) A planilha está "Publicar na web" / visível para qualquer pessoa com o link?\n` +
+            `2) Os GIDs estão corretos?\n` +
+            `3) As abas têm dados (linha de cabeçalho + linhas abaixo)?`
+        );
+        // mantém tabela com mensagem amigável
+        const tbody = document.getElementById('tableBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="12" class="loading-message"><i class="fas fa-exclamation-triangle"></i> Erro ao carregar dados</td></tr>';
+        }
     } finally {
         showLoading(false);
     }
 }
 
 // ===================================
-// PARSE CSV (COM SUPORTE A ASPAS)
+// PARSE CSV (COM SUPORTE A ASPAS) + AUTO-DETECT ; ou ,
 // ===================================
+function detectDelimiter(text) {
+    const sample = text.slice(0, 2000);
+    const commas = (sample.match(/,/g) || []).length;
+    const semis = (sample.match(/;/g) || []).length;
+    // Google Sheets pt-BR frequentemente usa ;, então prioriza o maior
+    return semis > commas ? ';' : ',';
+}
+
 function parseCSV(text) {
+    const delimiter = detectDelimiter(text);
     const rows = [];
     let currentRow = [];
     let currentCell = '';
@@ -224,30 +277,29 @@ function parseCSV(text) {
             } else {
                 insideQuotes = !insideQuotes;
             }
-        } else if (char === ',' && !insideQuotes) {
-            currentRow.push(currentCell.trim());
+        } else if (char === delimiter && !insideQuotes) {
+            currentRow.push(currentCell);
             currentCell = '';
         } else if ((char === '\n' || char === '\r') && !insideQuotes) {
-            if (currentCell || currentRow.length > 0) {
-                currentRow.push(currentCell.trim());
-                rows.push(currentRow);
+            if (currentCell !== '' || currentRow.length > 0) {
+                currentRow.push(currentCell);
+                rows.push(currentRow.map(c => String(c ?? '').trim()));
                 currentRow = [];
                 currentCell = '';
             }
-            if (char === '\r' && nextChar === '\n') {
-                i++;
-            }
+            if (char === '\r' && nextChar === '\n') i++;
         } else {
             currentCell += char;
         }
     }
 
-    if (currentCell || currentRow.length > 0) {
-        currentRow.push(currentCell.trim());
-        rows.push(currentRow);
+    if (currentCell !== '' || currentRow.length > 0) {
+        currentRow.push(currentCell);
+        rows.push(currentRow.map(c => String(c ?? '').trim()));
     }
 
-    return rows;
+    // remove linhas totalmente vazias
+    return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
 }
 
 // ===================================
@@ -255,6 +307,7 @@ function parseCSV(text) {
 // ===================================
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
     if (show) overlay.classList.add('active');
     else overlay.classList.remove('active');
 }
@@ -263,16 +316,20 @@ function showLoading(show) {
 // ✅ POPULAR FILTROS (MULTISELECT + MÊS)
 // ===================================
 function populateFilters() {
-    const statusList = [...new Set(allData.map(item => item['Status']))].filter(Boolean).sort();
+    const statusList = [...new Set(allData.map(item => getValueByHeaderAliases(item, ['Status'], '')))]
+        .filter(Boolean).sort();
     renderMultiSelect('msStatusPanel', statusList, applyFilters);
 
-    const unidades = [...new Set(allData.map(item => item['Unidade Solicitante']))].filter(Boolean).sort();
+    const unidades = [...new Set(allData.map(item => getValueByHeaderAliases(item, ['Unidade Solicitante'], '')))]
+        .filter(Boolean).sort();
     renderMultiSelect('msUnidadePanel', unidades, applyFilters);
 
-    const especialidades = [...new Set(allData.map(item => item['Cbo Especialidade']))].filter(Boolean).sort();
+    const especialidades = [...new Set(allData.map(item => getValueByHeaderAliases(item, ['Cbo Especialidade', 'CBO Especialidade'], '')))]
+        .filter(Boolean).sort();
     renderMultiSelect('msEspecialidadePanel', especialidades, applyFilters);
 
-    const prestadores = [...new Set(allData.map(item => item['Prestador']))].filter(Boolean).sort();
+    const prestadores = [...new Set(allData.map(item => getValueByHeaderAliases(item, ['Prestador'], '')))]
+        .filter(Boolean).sort();
     renderMultiSelect('msPrestadorPanel', prestadores, applyFilters);
 
     setMultiSelectText('msStatusText', [], 'Todos');
@@ -280,7 +337,6 @@ function populateFilters() {
     setMultiSelectText('msEspecialidadeText', [], 'Todas');
     setMultiSelectText('msPrestadorText', [], 'Todos');
 
-    // ✅ POPULAR FILTRO DE MÊS
     populateMonthFilter();
 }
 
@@ -289,15 +345,17 @@ function populateFilters() {
 // ===================================
 function populateMonthFilter() {
     const selectMes = document.getElementById('filterMes');
+    if (!selectMes) return;
+
     const mesesSet = new Set();
 
     allData.forEach(item => {
-        const dataInicio = parseDate(getColumnValue(item, [
+        const dataInicio = parseDate(getValueByHeaderAliases(item, [
             'Data Início da Pendência',
             'Data Inicio da Pendencia',
             'Data Início Pendência',
             'Data Inicio Pendencia'
-        ]));
+        ], ''));
 
         if (dataInicio) {
             const mesAno = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, '0')}`;
@@ -308,10 +366,10 @@ function populateMonthFilter() {
     const mesesOrdenados = Array.from(mesesSet).sort().reverse();
 
     selectMes.innerHTML = '<option value="">Todos os Meses</option>';
-    
+
     mesesOrdenados.forEach(mesAno => {
         const [ano, mes] = mesAno.split('-');
-        const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const nomeMes = new Date(Number(ano), Number(mes) - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         const option = document.createElement('option');
         option.value = mesAno;
         option.textContent = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
@@ -335,20 +393,24 @@ function applyFilters() {
     setMultiSelectText('msPrestadorText', prestadorSel, 'Todos');
 
     filteredData = allData.filter(item => {
-        const okStatus = (statusSel.length === 0) || statusSel.includes(item['Status'] || '');
-        const okUnidade = (unidadeSel.length === 0) || unidadeSel.includes(item['Unidade Solicitante'] || '');
-        const okEsp = (especialidadeSel.length === 0) || especialidadeSel.includes(item['Cbo Especialidade'] || '');
-        const okPrest = (prestadorSel.length === 0) || prestadorSel.includes(item['Prestador'] || '');
+        const status = getValueByHeaderAliases(item, ['Status'], '');
+        const unidade = getValueByHeaderAliases(item, ['Unidade Solicitante'], '');
+        const esp = getValueByHeaderAliases(item, ['Cbo Especialidade', 'CBO Especialidade'], '');
+        const prest = getValueByHeaderAliases(item, ['Prestador'], '');
 
-        // ✅ FILTRO POR MÊS
+        const okStatus = (statusSel.length === 0) || statusSel.includes(status);
+        const okUnidade = (unidadeSel.length === 0) || unidadeSel.includes(unidade);
+        const okEsp = (especialidadeSel.length === 0) || especialidadeSel.includes(esp);
+        const okPrest = (prestadorSel.length === 0) || prestadorSel.includes(prest);
+
         let okMes = true;
         if (mesSel) {
-            const dataInicio = parseDate(getColumnValue(item, [
+            const dataInicio = parseDate(getValueByHeaderAliases(item, [
                 'Data Início da Pendência',
                 'Data Inicio da Pendencia',
                 'Data Início Pendência',
                 'Data Inicio Pendencia'
-            ]));
+            ], ''));
             if (dataInicio) {
                 const mesAnoItem = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, '0')}`;
                 okMes = (mesAnoItem === mesSel);
@@ -443,12 +505,12 @@ function updateCards() {
     filteredData.forEach(item => {
         if (!isPendenciaByUsuario(item)) return;
 
-        const dataInicio = parseDate(getColumnValue(item, [
+        const dataInicio = parseDate(getValueByHeaderAliases(item, [
             'Data Início da Pendência',
             'Data Inicio da Pendencia',
             'Data Início Pendência',
             'Data Inicio Pendencia'
-        ]));
+        ], ''));
 
         if (dataInicio) {
             const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
@@ -469,11 +531,11 @@ function updateCards() {
 // ✅ ATUALIZAR GRÁFICOS
 // ===================================
 function updateCharts() {
-    // ✅ Gráfico de Unidades (SOMENTE COM "USUÁRIO" PREENCHIDO)
+    // Unidades (somente usuário preenchido)
     const unidadesCount = {};
     filteredData.forEach(item => {
         if (!isPendenciaByUsuario(item)) return;
-        const unidade = item['Unidade Solicitante'] || 'Não informado';
+        const unidade = getValueByHeaderAliases(item, ['Unidade Solicitante'], 'Não informado') || 'Não informado';
         unidadesCount[unidade] = (unidadesCount[unidade] || 0) + 1;
     });
 
@@ -484,11 +546,11 @@ function updateCharts() {
 
     createHorizontalBarChart('chartUnidades', unidadesLabels, unidadesValues, '#48bb78');
 
-    // ✅ Gráfico de Especialidades (SOMENTE COM "USUÁRIO" PREENCHIDO)
+    // Especialidades (somente usuário preenchido)
     const especialidadesCount = {};
     filteredData.forEach(item => {
         if (!isPendenciaByUsuario(item)) return;
-        const especialidade = item['Cbo Especialidade'] || 'Não informado';
+        const especialidade = getValueByHeaderAliases(item, ['Cbo Especialidade', 'CBO Especialidade'], 'Não informado') || 'Não informado';
         especialidadesCount[especialidade] = (especialidadesCount[especialidade] || 0) + 1;
     });
 
@@ -499,10 +561,10 @@ function updateCharts() {
 
     createHorizontalBarChart('chartEspecialidades', especialidadesLabels, especialidadesValues, '#ef4444');
 
-    // ✅ GRÁFICO DE STATUS (mantido)
+    // Status
     const statusCount = {};
     filteredData.forEach(item => {
-        const status = item['Status'] || 'Não informado';
+        const status = getValueByHeaderAliases(item, ['Status'], 'Não informado') || 'Não informado';
         statusCount[status] = (statusCount[status] || 0) + 1;
     });
 
@@ -512,14 +574,14 @@ function updateCharts() {
 
     createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
 
-    // ✅ GRÁFICO DE PIZZA (mantido)
+    // Pizza
     createPieChart('chartPizzaStatus', statusLabels, statusValues);
 
-    // ✅ NOVO: PENDÊNCIAS POR PRESTADOR (VERTICAL, USUÁRIO PREENCHIDO)
+    // Prestador (vertical, usuário preenchido)
     const prestadorCount = {};
     filteredData.forEach(item => {
         if (!isPendenciaByUsuario(item)) return;
-        const prest = item['Prestador'] || 'Não informado';
+        const prest = getValueByHeaderAliases(item, ['Prestador'], 'Não informado') || 'Não informado';
         prestadorCount[prest] = (prestadorCount[prest] || 0) + 1;
     });
 
@@ -528,30 +590,25 @@ function updateCharts() {
         .slice(0, 50);
     const prestValues = prestLabels.map(l => prestadorCount[l]);
 
-    createVerticalBarChartCenteredValue(
-        'chartPendenciasPrestador',
-        prestLabels,
-        prestValues,
-        '#4c1d95' // roxo escuro
-    );
+    createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
-    // ✅ NOVO: PENDÊNCIAS POR MÊS (VERTICAL, USUÁRIO PREENCHIDO)
+    // Mês (vertical, usuário preenchido)
     const mesCount = {};
     filteredData.forEach(item => {
         if (!isPendenciaByUsuario(item)) return;
 
-        const dataInicio = parseDate(getColumnValue(item, [
+        const dataInicio = parseDate(getValueByHeaderAliases(item, [
             'Data Início da Pendência',
             'Data Inicio da Pendencia',
             'Data Início Pendência',
             'Data Inicio Pendencia'
-        ]));
+        ], ''));
 
         let chave = 'Não informado';
         if (dataInicio) {
-            const mesAno = `${dataInicio.getFullYear()}-${String(dataInicio.getMonth() + 1).padStart(2, '0')}`;
-            const [ano, mes] = mesAno.split('-');
-            const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const ano = dataInicio.getFullYear();
+            const mes = dataInicio.getMonth();
+            const nomeMes = new Date(ano, mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             chave = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
         }
 
@@ -563,24 +620,20 @@ function updateCharts() {
         .slice(0, 50);
     const mesValues = mesLabels.map(l => mesCount[l]);
 
-    createVerticalBarChartCenteredValue(
-        'chartPendenciasMes',
-        mesLabels,
-        mesValues,
-        '#0b2a6f' // azul escuro
-    );
+    createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 }
 
 // ===================================
 // CRIAR GRÁFICO DE BARRAS HORIZONTAIS
 // ===================================
 function createHorizontalBarChart(canvasId, labels, data, color) {
-    const ctx = document.getElementById(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
 
     if (canvasId === 'chartUnidades' && chartUnidades) chartUnidades.destroy();
     if (canvasId === 'chartEspecialidades' && chartEspecialidades) chartEspecialidades.destroy();
 
-    const chart = new Chart(ctx, {
+    const chart = new Chart(canvas, {
         type: 'bar',
         data: {
             labels: labels,
@@ -635,7 +688,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
                             ctx.textAlign = 'left';
                             ctx.textBaseline = 'middle';
 
-                            const dataString = dataset.data[index].toString();
+                            const dataString = String(dataset.data[index]);
                             const xPos = element.x + 10;
                             const yPos = element.y;
 
@@ -655,12 +708,13 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
 // ✅ NOVO: GRÁFICO VERTICAL COM VALOR NO MEIO DA BARRA (BRANCO E NEGRITO)
 // ===================================
 function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
-    const ctx = document.getElementById(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
 
     if (canvasId === 'chartPendenciasPrestador' && chartPendenciasPrestador) chartPendenciasPrestador.destroy();
     if (canvasId === 'chartPendenciasMes' && chartPendenciasMes) chartPendenciasMes.destroy();
 
-    const chart = new Chart(ctx, {
+    const chart = new Chart(canvas, {
         type: 'bar',
         data: {
             labels,
@@ -742,11 +796,12 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
 // ✅ CRIAR GRÁFICO DE BARRAS VERTICAIS (STATUS) COM VALORES NO MEIO DAS BARRAS
 // ===================================
 function createVerticalBarChart(canvasId, labels, data, color) {
-    const ctx = document.getElementById(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
 
     if (chartStatus) chartStatus.destroy();
 
-    const chart = new Chart(ctx, {
+    const chart = new Chart(canvas, {
         type: 'bar',
         data: {
             labels,
@@ -826,7 +881,8 @@ function createVerticalBarChart(canvasId, labels, data, color) {
 // ✅ CRIAR GRÁFICO DE PIZZA COM LEGENDA COMPLETA (TEXTO + BOLINHA)
 // ===================================
 function createPieChart(canvasId, labels, data) {
-    const ctx = document.getElementById(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
 
     if (chartPizzaStatus) chartPizzaStatus.destroy();
 
@@ -837,7 +893,7 @@ function createPieChart(canvasId, labels, data) {
 
     const total = data.reduce((sum, val) => sum + val, 0);
 
-    chartPizzaStatus = new Chart(ctx, {
+    chartPizzaStatus = new Chart(canvas, {
         type: 'pie',
         data: {
             labels: labels,
@@ -856,7 +912,7 @@ function createPieChart(canvasId, labels, data) {
                     display: true,
                     position: 'right',
                     labels: {
-                        font: { 
+                        font: {
                             size: 14,
                             weight: 'bold',
                             family: 'Arial, sans-serif'
@@ -870,11 +926,11 @@ function createPieChart(canvasId, labels, data) {
                         generateLabels: function(chart) {
                             const datasets = chart.data.datasets;
                             const labels = chart.data.labels;
-                            
+
                             return labels.map((label, i) => {
                                 const value = datasets[0].data[i];
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                                
+
                                 return {
                                     text: `${label} (${percentage}%)`,
                                     fillStyle: datasets[0].backgroundColor[i],
@@ -910,23 +966,23 @@ function createPieChart(canvasId, labels, data) {
                 const ctx = chart.ctx;
                 const dataset = chart.data.datasets[0];
                 const meta = chart.getDatasetMeta(0);
-                
+
                 ctx.save();
                 ctx.font = 'bold 14px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
+
                 meta.data.forEach(function(element, index) {
                     const value = dataset.data[index];
                     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                    
+
                     if (parseFloat(percentage) > 5) {
                         ctx.fillStyle = '#ffffff';
                         const position = element.tooltipPosition();
                         ctx.fillText(`${percentage}%`, position.x, position.y);
                     }
                 });
-                
+
                 ctx.restore();
             }
         }]
@@ -934,7 +990,7 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ✅ ATUALIZAR TABELA - DESTAQUE AMARELO APENAS PARA ABA "PENDÊNCIAS ELDORADO"
+// ✅ ATUALIZAR TABELA
 // ===================================
 function updateTable() {
     const tbody = document.getElementById('tableBody');
@@ -954,87 +1010,82 @@ function updateTable() {
 
         const origem = item['_origem'] || '-';
 
-        const dataSolicitacao = getColumnValue(item, [
+        const dataSolicitacao = getValueByHeaderAliases(item, [
             'Data da Solicitação',
             'Data Solicitação',
             'Data da Solicitacao',
             'Data Solicitacao'
-        ]);
+        ], '-');
 
-        const prontuario = getColumnValue(item, [
+        const prontuario = getValueByHeaderAliases(item, [
             'Nº Prontuário',
             'N° Prontuário',
             'Numero Prontuário',
             'Prontuário',
             'Prontuario'
-        ]);
+        ], '-');
 
-        const dataInicioStr = getColumnValue(item, [
+        const dataInicioStr = getValueByHeaderAliases(item, [
             'Data Início da Pendência',
             'Data Inicio da Pendencia',
             'Data Início Pendência',
             'Data Inicio Pendencia'
-        ]);
+        ], '-');
 
-        const prazo15 = getColumnValue(item, [
+        const prazo15 = getValueByHeaderAliases(item, [
             'Data Final do Prazo (Pendência com 15 dias)',
             'Data Final do Prazo (Pendencia com 15 dias)',
             'Data Final Prazo 15d',
             'Prazo 15 dias'
-        ]);
+        ], '-');
 
-        const email15 = getColumnValue(item, [
+        const email15 = getValueByHeaderAliases(item, [
             'Data do envio do Email (Prazo: Pendência com 15 dias)',
             'Data do envio do Email (Prazo: Pendencia com 15 dias)',
             'Data Envio Email 15d',
             'Email 15 dias'
-        ]);
+        ], '-');
 
-        const prazo30 = getColumnValue(item, [
+        const prazo30 = getValueByHeaderAliases(item, [
             'Data Final do Prazo (Pendência com 30 dias)',
             'Data Final do Prazo (Pendencia com 30 dias)',
             'Data Final Prazo 30d',
             'Prazo 30 dias'
-        ]);
+        ], '-');
 
-        const email30 = getColumnValue(item, [
+        const email30 = getValueByHeaderAliases(item, [
             'Data do envio do Email (Prazo: Pendência com 30 dias)',
             'Data do envio do Email (Prazo: Pendencia com 30 dias)',
             'Data Envio Email 30d',
             'Email 30 dias'
-        ]);
+        ], '-');
 
-        // ✅ VERIFICAR SE ESTÁ VENCENDO EM 15 DIAS E SE É DA ABA "PENDÊNCIAS ELDORADO"
+        // OBS: Mantive sua regra do destaque, mas com o nome certo da sua aba atual.
+        // Se você realmente quiser destacar outra aba, troque a string abaixo.
         const dataInicio = parseDate(dataInicioStr);
         let isVencendo15 = false;
-        
-        if (dataInicio && origem === 'PENDÊNCIAS ELDORADO') {
+
+        if (dataInicio && origem === 'PENDÊNCIAS VARGEM DAS FLORES') {
             const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
-            if (diasDecorridos >= 15 && diasDecorridos < 30) {
-                isVencendo15 = true;
-            }
+            if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
         }
 
         row.innerHTML = `
-            <td>${origem}</td>
-            <td>${formatDate(dataSolicitacao)}</td>
-            <td>${prontuario}</td>
-            <td>${item['Telefone'] || '-'}</td>
-            <td>${item['Unidade Solicitante'] || '-'}</td>
-            <td>${item['Cbo Especialidade'] || '-'}</td>
-            <td>${formatDate(dataInicioStr)}</td>
-            <td>${item['Status'] || '-'}</td>
-            <td>${formatDate(prazo15)}</td>
-            <td>${formatDate(email15)}</td>
-            <td>${formatDate(prazo30)}</td>
-            <td>${formatDate(email30)}</td>
+            <td>${escapeHtml(origem)}</td>
+            <td>${escapeHtml(formatDate(dataSolicitacao))}</td>
+            <td>${escapeHtml(prontuario)}</td>
+            <td>${escapeHtml(getValueByHeaderAliases(item, ['Telefone'], '-'))}</td>
+            <td>${escapeHtml(getValueByHeaderAliases(item, ['Unidade Solicitante'], '-'))}</td>
+            <td>${escapeHtml(getValueByHeaderAliases(item, ['Cbo Especialidade', 'CBO Especialidade'], '-'))}</td>
+            <td>${escapeHtml(formatDate(dataInicioStr))}</td>
+            <td>${escapeHtml(getValueByHeaderAliases(item, ['Status'], '-'))}</td>
+            <td>${escapeHtml(formatDate(prazo15))}</td>
+            <td>${escapeHtml(formatDate(email15))}</td>
+            <td>${escapeHtml(formatDate(prazo30))}</td>
+            <td>${escapeHtml(formatDate(email30))}</td>
         `;
 
-        // ✅ APLICAR DESTAQUE AMARELO SOMENTE SE FOR DA ABA "PENDÊNCIAS ELDORADO" E ESTIVER VENCENDO EM 15 DIAS
-        if (isVencendo15) {
-            row.classList.add('row-vencendo-15');
-        }
-
+        if (isVencendo15) row.classList.add('row-vencendo-15');
         tbody.appendChild(row);
     });
 
@@ -1049,11 +1100,13 @@ function updateTable() {
 function parseDate(dateString) {
     if (!dateString || dateString === '-') return null;
 
-    let match = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) return new Date(match[3], match[2] - 1, match[1]);
+    const s = String(dateString).trim();
 
-    match = dateString.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (match) return new Date(match[1], match[2] - 1, match[3]);
+    let match = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+
+    match = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 
     return null;
 }
@@ -1062,7 +1115,7 @@ function formatDate(dateString) {
     if (!dateString || dateString === '-') return '-';
 
     const date = parseDate(dateString);
-    if (!date || isNaN(date.getTime())) return dateString;
+    if (!date || isNaN(date.getTime())) return String(dateString);
 
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1089,18 +1142,18 @@ function downloadExcel() {
 
     const exportData = filteredData.map(item => ({
         'Origem': item['_origem'] || '',
-        'Data Solicitação': getColumnValue(item, ['Data da Solicitação', 'Data Solicitação', 'Data da Solicitacao', 'Data Solicitacao'], ''),
-        'Nº Prontuário': getColumnValue(item, ['Nº Prontuário', 'N° Prontuário', 'Numero Prontuário', 'Prontuário', 'Prontuario'], ''),
-        'Telefone': item['Telefone'] || '',
-        'Unidade Solicitante': item['Unidade Solicitante'] || '',
-        'CBO Especialidade': item['Cbo Especialidade'] || '',
-        'Data Início Pendência': getColumnValue(item, ['Data Início da Pendência','Data Início Pendência','Data Inicio da Pendencia','Data Inicio Pendencia'], ''),
-        'Status': item['Status'] || '',
-        'Prestador': item['Prestador'] || '',
-        'Data Final Prazo 15d': getColumnValue(item, ['Data Final do Prazo (Pendência com 15 dias)','Data Final do Prazo (Pendencia com 15 dias)','Data Final Prazo 15d','Prazo 15 dias'], ''),
-        'Data Envio Email 15d': getColumnValue(item, ['Data do envio do Email (Prazo: Pendência com 15 dias)','Data do envio do Email (Prazo: Pendencia com 15 dias)','Data Envio Email 15d','Email 15 dias'], ''),
-        'Data Final Prazo 30d': getColumnValue(item, ['Data Final do Prazo (Pendência com 30 dias)','Data Final do Prazo (Pendencia com 30 dias)','Data Final Prazo 30d','Prazo 30 dias'], ''),
-        'Data Envio Email 30d': getColumnValue(item, ['Data do envio do Email (Prazo: Pendência com 30 dias)','Data do envio do Email (Prazo: Pendencia com 30 dias)','Data Envio Email 30d','Email 30 dias'], '')
+        'Data Solicitação': getValueByHeaderAliases(item, ['Data da Solicitação', 'Data Solicitação', 'Data da Solicitacao', 'Data Solicitacao'], ''),
+        'Nº Prontuário': getValueByHeaderAliases(item, ['Nº Prontuário', 'N° Prontuário', 'Numero Prontuário', 'Prontuário', 'Prontuario'], ''),
+        'Telefone': getValueByHeaderAliases(item, ['Telefone'], ''),
+        'Unidade Solicitante': getValueByHeaderAliases(item, ['Unidade Solicitante'], ''),
+        'CBO Especialidade': getValueByHeaderAliases(item, ['Cbo Especialidade', 'CBO Especialidade'], ''),
+        'Data Início Pendência': getValueByHeaderAliases(item, ['Data Início da Pendência','Data Início Pendência','Data Inicio da Pendencia','Data Inicio Pendencia'], ''),
+        'Status': getValueByHeaderAliases(item, ['Status'], ''),
+        'Prestador': getValueByHeaderAliases(item, ['Prestador'], ''),
+        'Data Final Prazo 15d': getValueByHeaderAliases(item, ['Data Final do Prazo (Pendência com 15 dias)','Data Final do Prazo (Pendencia com 15 dias)','Data Final Prazo 15d','Prazo 15 dias'], ''),
+        'Data Envio Email 15d': getValueByHeaderAliases(item, ['Data do envio do Email (Prazo: Pendência com 15 dias)','Data do envio do Email (Prazo: Pendencia com 15 dias)','Data Envio Email 15d','Email 15 dias'], ''),
+        'Data Final Prazo 30d': getValueByHeaderAliases(item, ['Data Final do Prazo (Pendência com 30 dias)','Data Final do Prazo (Pendencia com 30 dias)','Data Final Prazo 30d','Prazo 30 dias'], ''),
+        'Data Envio Email 30d': getValueByHeaderAliases(item, ['Data do envio do Email (Prazo: Pendência com 30 dias)','Data do envio do Email (Prazo: Pendencia com 30 dias)','Data Envio Email 30d','Email 30 dias'], '')
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -1116,5 +1169,3 @@ function downloadExcel() {
     const hoje = new Date().toISOString().split('T')[0];
     XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
-
-
