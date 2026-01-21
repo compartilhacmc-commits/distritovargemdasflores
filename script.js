@@ -16,13 +16,13 @@ const SHEETS = [
   {
     name: 'PENDÊNCIAS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '278071504'),
-    distrito: 'RESSACA',
+    distrito: 'VARGEM DAS FLORES',
     tipo: 'PENDENTE'
   },
   {
     name: 'RESOLVIDOS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '451254610'),
-    distrito: 'RESSACA',
+    distrito: 'VARGEM DAS FLORES',
     tipo: 'RESOLVIDO'
   }
 ];
@@ -1288,3 +1288,4 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
 }
+
