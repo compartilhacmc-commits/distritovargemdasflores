@@ -7,7 +7,7 @@ function gvizCsvUrl(sheetId, gid) {
 }
 
 // ===================================
-// ✅ CONFIGURAÇÃO DA PLANILHA (DUAS ABAS) - ALTERADO
+// CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
 // ===================================
 const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
 
@@ -1245,10 +1245,4 @@ function downloadExcel() {
 
   ws['!cols'] = [
     { wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-    { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 20 },
-    { wch: 25 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }
-  ];
-
-  const hoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dados_Vargem_Das_Flores_${hoje}.xlsx`);
-}
+    { wch: 30 }, { wch: 30 }, { wch: 18
