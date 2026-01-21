@@ -7,7 +7,7 @@ function gvizCsvUrl(sheetId, gid) {
 }
 
 // ===================================
-// ✅ CONFIGURAÇÃO DA PLANILHA (NOVAS ABAS VARGEM DAS FLORES)
+// ✅ CONFIGURAÇÃO DA PLANILHA (DUAS ABAS) - ALTERADO
 // ===================================
 const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
 
@@ -19,7 +19,7 @@ const SHEETS = [
     tipo: 'PENDENTE'
   },
   {
-    name: 'RESOLVIDOS VARGEM DAS FLORES',
+    name: 'RESOLVIDOS',
     url: gvizCsvUrl(SHEET_ID, '451254610'),
     distrito: 'VARGEM DAS FLORES',
     tipo: 'RESOLVIDO'
@@ -1250,5 +1250,5 @@ function downloadExcel() {
   ];
 
   const hoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dados_VargemDasFlores_${hoje}.xlsx`);
+  XLSX.writeFile(wb, `Dados_Vargem_Das_Flores_${hoje}.xlsx`);
 }
