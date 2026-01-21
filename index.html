@@ -45,7 +45,7 @@
                     <i class="fas fa-clipboard-list"></i>
                 </div>
                 <div class="card-info">
-                    <h3 class="card-title">Total de Registros</h3>
+                    <h3 class="card-title">Total Geral de Registros</h3>
                     <p class="card-value" id="totalPendencias">0</p>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                     <i class="fas fa-clock"></i>
                 </div>
                 <div class="card-info">
-                    <h3 class="card-title">Vencendo em 15 Dias</h3>
+                    <h3 class="card-title">Pendências Vencendo em 15 Dias</h3>
                     <p class="card-value" id="pendencias15">0</p>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="card-info">
-                    <h3 class="card-title">Vencendo em 30 Dias</h3>
+                    <h3 class="card-title">Pendências Vencendo em 30 Dias</h3>
                     <p class="card-value" id="pendencias30">0</p>
                 </div>
             </div>
@@ -154,7 +154,7 @@
             </button>
         </div>
 
-        <!-- Gráficos (ORDEM ALTERADA) -->
+        <!-- Gráficos (SEM OS DOIS REMOVIDOS) -->
         <div class="charts-container">
             <!-- LINHA 1 -->
             <div class="chart-box">
@@ -201,22 +201,7 @@
                 </div>
             </div>
 
-            <!-- LINHA 4 -->
-            <div class="chart-box">
-                <h3 class="chart-title">Estatística de Resolutividade por Unidade de Saúde</h3>
-                <div class="chart-wrapper">
-                    <canvas id="chartResolutividadeUnidade"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-box">
-                <h3 class="chart-title">Estatística de Resolutividade por Prestador</h3>
-                <div class="chart-wrapper">
-                    <canvas id="chartResolutividadePrestador"></canvas>
-                </div>
-            </div>
-
-            <!-- LINHA 5 - PIZZA (FULL WIDTH) -->
+            <!-- LINHA 4 - PIZZA (FULL WIDTH) -->
             <div class="chart-box chart-box-full">
                 <h3 class="chart-title">Distribuição Percentual por Status</h3>
                 <div class="chart-wrapper chart-wrapper-pizza">
@@ -235,6 +220,19 @@
             <div class="search-box">
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="Pesquisar na tabela..." onkeyup="searchTable()">
+            </div>
+
+            <!-- ✅ SELETOR DE ITENS POR PÁGINA -->
+            <div class="pagination-controls">
+                <label for="itemsPerPage">Mostrar:</label>
+                <select id="itemsPerPage" onchange="changeItemsPerPage()">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="-1">Todos</option>
+                </select>
+                <span>registros por página</span>
             </div>
 
             <div class="table-wrapper">
@@ -294,10 +292,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
