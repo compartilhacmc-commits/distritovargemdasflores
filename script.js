@@ -617,8 +617,10 @@ function updateCharts() {
 }
 
 // ===================================
-// ✅ GRÁFICO DE RESOLUTIVIDADE (CORRIGIDO)
-// ✅ Usa allData (SEM filtros) para estatísticas corretas
+// ✅ GRÁFICO DE RESOLUTIVIDADE
+// ✅ Total = TUDO (ambas abas)
+// ✅ Resolvidos = CONTAGEM DIRETA da aba RESOLVIDOS
+// ✅ Pendentes = CONTAGEM DIRETA da aba PENDÊNCIAS
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -627,47 +629,56 @@ function createResolutividadeChart(canvasId, fieldName) {
   if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) chartResolutividadeUnidade.destroy();
   if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) chartResolutividadePrestador.destroy();
 
-  // ✅ CORREÇÃO PRINCIPAL: usar allData ao invés de filteredData
+  // stats[key] = { total, resolvidos, pendentes }
   const stats = {};
 
-  // 1) Contar TOTAL (todas as abas, todos os registros com "Usuário" preenchido)
+  // 1) TOTAL GERAL (ambas abas)
   allData.forEach(item => {
-    if (!isPendenciaByUsuario(item)) return;
-
     const valor = item[fieldName] || 'Não informado';
 
     if (!stats[valor]) {
-      stats[valor] = { total: 0, pendentes: 0 };
+      stats[valor] = { total: 0, resolvidos: 0, pendentes: 0 };
     }
 
     stats[valor].total++;
   });
 
-  // 2) Contar PENDENTES (apenas aba PENDÊNCIAS com "Usuário" preenchido)
+  // 2) RESOLVIDOS (aba RESOLVIDOS)
   allData.forEach(item => {
-    if (!isPendenciaByUsuario(item)) return;
+    if (!isOrigemResolvidos(item)) return;
+
+    const valor = item[fieldName] || 'Não informado';
+
+    if (!stats[valor]) {
+      stats[valor] = { total: 0, resolvidos: 0, pendentes: 0 };
+    }
+
+    stats[valor].resolvidos++;
+  });
+
+  // 3) PENDENTES (aba PENDÊNCIAS)
+  allData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
 
     const valor = item[fieldName] || 'Não informado';
 
     if (!stats[valor]) {
-      stats[valor] = { total: 0, pendentes: 0 };
+      stats[valor] = { total: 0, resolvidos: 0, pendentes: 0 };
     }
 
     stats[valor].pendentes++;
   });
 
-  // 3) Calcular resolvidos e taxa
+  // 4) Calcular taxa de resolutividade
   const data = Object.keys(stats).map(key => {
     const total = stats[key].total;
+    const resolvidos = stats[key].resolvidos;
     const pendentes = stats[key].pendentes;
-    const pendentesAjustado = Math.min(pendentes, total);
-    const resolvidos = Math.max(0, total - pendentesAjustado);
     const taxa = total > 0 ? (resolvidos / total) * 100 : 0;
 
     return {
       label: key,
-      pendentes: pendentesAjustado,
+      pendentes,
       resolvidos,
       total,
       taxa
@@ -680,6 +691,13 @@ function createResolutividadeChart(canvasId, fieldName) {
   const top10 = data.slice(0, 10);
   const labels = top10.map(d => d.label);
   const taxas = top10.map(d => d.taxa);
+
+  // Log para debug
+  console.log('=== RESOLUTIVIDADE DEBUG ===');
+  console.log('Campo:', fieldName);
+  top10.forEach(d => {
+    console.log(`${d.label}: Total=${d.total}, Resolvidos=${d.resolvidos}, Pendentes=${d.pendentes}, Taxa=${d.taxa.toFixed(1)}%`);
+  });
 
   const chart = new Chart(ctx, {
     type: 'bar',
@@ -713,7 +731,7 @@ function createResolutividadeChart(canvasId, fieldName) {
               const index = context.dataIndex;
               const item = top10[index];
               return [
-                `Taxa: ${item.taxa.toFixed(1)}%`,
+                `Resolutividade: ${item.taxa.toFixed(1)}%`,
                 `Resolvidos: ${item.resolvidos}`,
                 `Pendentes: ${item.pendentes}`,
                 `Total: ${item.total}`
@@ -740,7 +758,7 @@ function createResolutividadeChart(canvasId, fieldName) {
           grid: { display: false }
         }
       },
-      layout: { padding: { right: 60 } }
+      layout: { padding: { right: 80 } }
     },
     plugins: [{
       id: 'resolutividadeLabels',
