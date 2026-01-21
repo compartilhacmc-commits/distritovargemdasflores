@@ -19,7 +19,7 @@ const SHEETS = [
     tipo: 'PENDENTE'
   },
   {
-    name: 'RESOLVIDOS',
+    name: 'RESOLVIDOS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '451254610'),
     distrito: 'VARGEM DAS FLORES',
     tipo: 'RESOLVIDO'
