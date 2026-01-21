@@ -279,28 +279,6 @@ body {
     font-size: 0.95rem;
 }
 
-.filter-select {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--azul-medio);
-    border-radius: 8px;
-    font-size: 1rem;
-    color: var(--cinza-800);
-    background: var(--branco);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: var(--azul-claro);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.filter-select:hover {
-    border-color: var(--azul-claro);
-}
-
 /* ===================================
    GRÁFICOS
 =================================== */
@@ -318,7 +296,7 @@ body {
     box-shadow: var(--sombra-md);
 }
 
-/* ✅ PIZZA OCUPA LARGURA TOTAL */
+/* ✅ BLOCO FULL */
 .chart-box-full {
     grid-column: 1 / -1;
 }
@@ -327,11 +305,35 @@ body {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--azul-escuro);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--cinza-200);
 }
 
+/* ✅ SUBTÍTULO (novo) */
+.chart-subtitle{
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--cinza-800);
+    margin: 0.25rem 0 0.8rem;
+}
+
+/* ✅ NOVO LAYOUT: PIZZA + TOP STATUS LADO A LADO */
+.charts-row-2{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.chart-half{
+    background: rgba(59,130,246,0.04);
+    border: 1px solid rgba(59,130,246,0.10);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+/* Alturas */
 .chart-wrapper {
     position: relative;
     height: 520px;
@@ -340,8 +342,8 @@ body {
 
 .chart-wrapper-pizza {
     position: relative;
-    height: 450px;
-    min-height: 400px;
+    height: 420px;
+    min-height: 380px;
 }
 
 .chart-wrapper-status {
@@ -356,13 +358,19 @@ body {
     }
 }
 
+@media (max-width: 900px){
+    .charts-row-2{
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     .chart-wrapper {
         height: 400px;
     }
 
     .chart-wrapper-pizza {
-        height: 380px;
+        height: 360px;
     }
 
     .chart-wrapper-status {
@@ -371,7 +379,7 @@ body {
 }
 
 /* ===================================
-   ✅ NOVO ESTILO DE TABELA (BASEADO NAS IMAGENS)
+   ✅ NOVO ESTILO DE TABELA
 =================================== */
 .table-container {
     background: var(--branco);
@@ -381,7 +389,6 @@ body {
     margin-bottom: 2rem;
 }
 
-/* CAIXA DE PESQUISA - ESTILO MODERNO */
 .search-box {
     display: flex;
     align-items: center;
@@ -418,7 +425,6 @@ body {
     color: #9ca3af;
 }
 
-/* ✅ CONTROLES DE PAGINAÇÃO */
 .pagination-controls {
     display: flex;
     align-items: center;
@@ -454,7 +460,6 @@ body {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* WRAPPER DA TABELA */
 .table-wrapper {
     overflow-x: auto;
     margin-top: 1rem;
@@ -463,7 +468,6 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* TABELA - ESTILO DAS IMAGENS */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -471,7 +475,6 @@ body {
     background: #ffffff;
 }
 
-/* CABEÇALHO DA TABELA - AZUL ESCURO */
 .data-table thead {
     background: #1e3a8a;
     position: sticky;
@@ -496,7 +499,6 @@ body {
     border-right: none;
 }
 
-/* CORPO DA TABELA */
 .data-table tbody tr {
     border-bottom: 1px solid #e5e7eb;
     transition: all 0.2s ease;
@@ -506,7 +508,6 @@ body {
     background: #f0f9ff;
 }
 
-/* ALTERNÂNCIA DE CORES NAS LINHAS */
 .data-table tbody tr:nth-child(even) {
     background: #f9fafb;
 }
@@ -515,7 +516,6 @@ body {
     background: #f0f9ff;
 }
 
-/* CÉLULAS DA TABELA */
 .data-table td {
     padding: 0.8rem 0.85rem;
     color: #374151;
@@ -529,7 +529,6 @@ body {
     border-right: none;
 }
 
-/* ✅ DESTAQUE AMARELO PARA LINHAS VENCENDO EM 15 DIAS */
 .data-table tbody tr.row-vencendo-15 {
     background-color: #fef3c7 !important;
     font-weight: 600;
@@ -539,7 +538,6 @@ body {
     background-color: #fde68a !important;
 }
 
-/* MENSAGEM DE CARREGAMENTO */
 .loading-message {
     text-align: center;
     padding: 3rem !important;
@@ -549,7 +547,6 @@ body {
     font-weight: 500;
 }
 
-/* RODAPÉ DA TABELA */
 .table-footer {
     margin-top: 1rem;
     padding-top: 1rem;
