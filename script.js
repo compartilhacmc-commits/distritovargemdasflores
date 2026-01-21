@@ -17,14 +17,14 @@ const SHEETS = [
     // ✅ ALTERADO: ELDORADO -> RESSACA (para a tabela/gráficos não rotularem errado)
     name: 'PENDÊNCIAS RESSACA',
     url: gvizCsvUrl(SHEET_ID, '278071504'),
-    distrito: 'ELDORADO',
+    distrito: 'RESSACA',
     tipo: 'PENDENTE'
   },
   {
     // ✅ ALTERADO: ELDORADO -> RESSACA (para a tabela/gráficos não rotularem errado)
     name: 'RESOLVIDOS RESSACA',
     url: gvizCsvUrl(SHEET_ID, '699447584'),
-    distrito: 'ELDORADO',
+    distrito: 'RESSACA',
     tipo: 'RESOLVIDO'
   }
 ];
@@ -1255,4 +1255,5 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
+
 
