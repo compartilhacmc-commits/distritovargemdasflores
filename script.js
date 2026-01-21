@@ -612,58 +612,55 @@ function updateCharts() {
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 
   // ✅ RESOLUTIVIDADE CORRIGIDA
-  createResolutividadeChart('chartResolutividadeUnidade', 'Unidade Solicitante');
-  createResolutividadeChart('chartResolutividadePrestador', 'Prestador');
+  createResolutividadeChartCorreto('chartResolutividadeUnidade', 'Unidade Solicitante');
+  createResolutividadeChartCorreto('chartResolutividadePrestador', 'Prestador');
 }
 
 // ===================================
-// ✅ GRÁFICO DE RESOLUTIVIDADE (CORRIGIDO)
+// ✅ GRÁFICO DE RESOLUTIVIDADE (100% CORRIGIDO)
 // ===================================
-function createResolutividadeChart(canvasId, fieldName) {
+function createResolutividadeChartCorreto(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
-  if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) chartResolutividadeUnidade.destroy();
-  if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) chartResolutividadePrestador.destroy();
+  // Destruir gráfico anterior
+  if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) {
+    chartResolutividadeUnidade.destroy();
+    chartResolutividadeUnidade = null;
+  }
+  if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) {
+    chartResolutividadePrestador.destroy();
+    chartResolutividadePrestador = null;
+  }
 
-  // ✅ LÓGICA CORRIGIDA:
-  // stats[key] = { resolvidos, pendentes, total }
+  // ✅ LÓGICA CORRIGIDA: contar resolvidos e pendentes DIRETAMENTE
   const stats = {};
 
-  // 1️⃣ Contar RESOLVIDOS (aba "RESOLVIDOS")
-  allData.forEach(item => {
+  // 1️⃣ Processar TODOS os dados (filteredData mantém coerência com outros gráficos)
+  filteredData.forEach(item => {
+    // Aplicar filtro de "usuário preenchido"
     if (!isPendenciaByUsuario(item)) return;
-    if (!isOrigemResolvidos(item)) return; // ✅ SOMENTE ABA RESOLVIDOS
 
     const valor = item[fieldName] || 'Não informado';
 
+    // Inicializar se não existir
     if (!stats[valor]) {
-      stats[valor] = { resolvidos: 0, pendentes: 0, total: 0 };
+      stats[valor] = { resolvidos: 0, pendentes: 0 };
     }
 
-    stats[valor].resolvidos++;
-  });
-
-  // 2️⃣ Contar PENDENTES (aba "PENDÊNCIAS")
-  allData.forEach(item => {
-    if (!isPendenciaByUsuario(item)) return;
-    if (!isOrigemPendencias(item)) return; // ✅ SOMENTE ABA PENDÊNCIAS
-
-    const valor = item[fieldName] || 'Não informado';
-
-    if (!stats[valor]) {
-      stats[valor] = { resolvidos: 0, pendentes: 0, total: 0 };
+    // Contar baseado na origem
+    if (isOrigemResolvidos(item)) {
+      stats[valor].resolvidos++;
+    } else if (isOrigemPendencias(item)) {
+      stats[valor].pendentes++;
     }
-
-    stats[valor].pendentes++;
   });
 
-  // 3️⃣ Calcular TOTAL e TAXA DE RESOLUTIVIDADE
+  // 2️⃣ Calcular total e taxa
   const data = Object.keys(stats).map(key => {
     const resolvidos = stats[key].resolvidos || 0;
     const pendentes = stats[key].pendentes || 0;
     const total = resolvidos + pendentes;
-
     const taxa = total > 0 ? (resolvidos / total) * 100 : 0;
 
     return {
@@ -675,10 +672,19 @@ function createResolutividadeChart(canvasId, fieldName) {
     };
   });
 
-  // Ordenar por taxa desc (e depois por total desc para desempate)
-  data.sort((a, b) => (b.taxa - a.taxa) || (b.total - a.total));
+  // Filtrar apenas com dados válidos
+  const dataValida = data.filter(d => d.total > 0);
 
-  const top10 = data.slice(0, 10);
+  // Se não houver dados, não criar gráfico
+  if (dataValida.length === 0) {
+    console.warn(`Sem dados para ${canvasId}`);
+    return;
+  }
+
+  // Ordenar por taxa desc
+  dataValida.sort((a, b) => (b.taxa - a.taxa) || (b.total - a.total));
+
+  const top10 = dataValida.slice(0, 10);
   const labels = top10.map(d => d.label);
   const taxas = top10.map(d => d.taxa);
 
@@ -769,6 +775,7 @@ function createResolutividadeChart(canvasId, fieldName) {
     }]
   });
 
+  // Salvar referência
   if (canvasId === 'chartResolutividadeUnidade') chartResolutividadeUnidade = chart;
   if (canvasId === 'chartResolutividadePrestador') chartResolutividadePrestador = chart;
 }
