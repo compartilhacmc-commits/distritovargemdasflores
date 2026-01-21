@@ -418,6 +418,42 @@ body {
     color: #9ca3af;
 }
 
+/* ✅ CONTROLES DE PAGINAÇÃO */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: var(--cinza-800);
+}
+
+.pagination-controls label {
+    font-weight: 600;
+}
+
+.pagination-controls select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--azul-medio);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--cinza-800);
+    background: var(--branco);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pagination-controls select:hover {
+    border-color: var(--azul-claro);
+}
+
+.pagination-controls select:focus {
+    outline: none;
+    border-color: var(--azul-claro);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 /* WRAPPER DA TABELA */
 .table-wrapper {
     overflow-x: auto;
@@ -750,6 +786,3 @@ html {
 
 .ms-item input{ width: 16px; height: 16px; }
 .ms-item span{ font-size: 0.95rem; color: var(--cinza-800); }
-
-
-
