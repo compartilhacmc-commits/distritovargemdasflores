@@ -9,21 +9,19 @@ function gvizCsvUrl(sheetId, gid) {
 // ===================================
 // CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
 // ===================================
-// ✅ PLANILHA "RESSACA"
-const SHEET_ID = '1aIsq1a8Lb90M19TQdiJG_WyX7wzzC2WRohelJY6A-u8';
+// ✅ PLANILHA "VARGEM DAS FLORES"
+const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
 
 const SHEETS = [
   {
-    // ✅ ALTERADO: ELDORADO -> RESSACA (para a tabela/gráficos não rotularem errado)
-    name: 'PENDÊNCIAS RESSACA',
+    name: 'PENDÊNCIAS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '278071504'),
     distrito: 'RESSACA',
     tipo: 'PENDENTE'
   },
   {
-    // ✅ ALTERADO: ELDORADO -> RESSACA (para a tabela/gráficos não rotularem errado)
-    name: 'RESOLVIDOS RESSACA',
-    url: gvizCsvUrl(SHEET_ID, '699447584'),
+    name: 'RESOLVIDOS VARGEM DAS FLORES',
+    url: gvizCsvUrl(SHEET_ID, '451254610'),
     distrito: 'RESSACA',
     tipo: 'RESOLVIDO'
   }
@@ -1255,5 +1253,6 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
+
 
 
