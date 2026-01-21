@@ -455,7 +455,7 @@ function searchTable() {
 }
 
 // ===================================
-// ATUALIZAR DASHBOARD
+// DASHBOARD
 // ===================================
 function updateDashboard() {
   updateCards();
@@ -464,7 +464,7 @@ function updateDashboard() {
 }
 
 // ===================================
-// ✅ ATUALIZAR CARDS (CONTANDO POR "USUÁRIO" PREENCHIDO)
+// ✅ CARDS (CONTANDO POR "USUÁRIO" PREENCHIDO)
 // ===================================
 function updateCards() {
   const total = allData.length;
@@ -500,7 +500,7 @@ function updateCards() {
 }
 
 // ===================================
-// ✅ ATUALIZAR GRÁFICOS (CORES ALTERADAS)
+// ✅ GRÁFICOS
 // ===================================
 function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
@@ -618,8 +618,7 @@ function updateCharts() {
 }
 
 // ===================================
-// ✅ CRIAR GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
-// CORREÇÃO: usar filteredData (não allData) para precisão com filtros
+// ✅ GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -630,8 +629,7 @@ function createResolutividadeChart(canvasId, fieldName) {
 
   const stats = {};
 
-  // ✅ IMPORTANTE: respeitar filtros (filteredData)
-  filteredData.forEach(item => {
+  allData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
 
     const valor = item[fieldName] || 'Não informado';
@@ -639,7 +637,7 @@ function createResolutividadeChart(canvasId, fieldName) {
 
     stats[valor].total++;
 
-    if (isOrigemResolvidos(item)) {
+    if ((item['_origem'] || '').toUpperCase().includes('RESOLVIDOS')) {
       stats[valor].resolvidos++;
     }
   });
@@ -749,7 +747,7 @@ function createResolutividadeChart(canvasId, fieldName) {
 }
 
 // ===================================
-// CRIAR GRÁFICO DE BARRAS HORIZONTAIS
+// GRÁFICO DE BARRAS HORIZONTAIS
 // ===================================
 function createHorizontalBarChart(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -906,7 +904,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
 }
 
 // ===================================
-// CRIAR GRÁFICO DE BARRAS VERTICAIS (STATUS)
+// GRÁFICO DE BARRAS VERTICAIS (STATUS)
 // ===================================
 function createVerticalBarChart(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -983,7 +981,7 @@ function createVerticalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// CRIAR GRÁFICO DE PIZZA
+// GRÁFICO DE PIZZA
 // ===================================
 function createPieChart(canvasId, labels, data) {
   const ctx = document.getElementById(canvasId);
@@ -1226,7 +1224,7 @@ function formatDate(dateString) {
 }
 
 // ===================================
-// ATUALIZAR DADOS
+// DADOS
 // ===================================
 function refreshData() {
   loadData();
@@ -1270,3 +1268,4 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
+
