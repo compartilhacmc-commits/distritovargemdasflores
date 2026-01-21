@@ -1250,8 +1250,4 @@ function downloadExcel() {
   ];
 
   const hoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
-}
-
-
-
+  XLSX.writeFile(wb, `Vargem das Flores_${hoje}.xlsx`);
