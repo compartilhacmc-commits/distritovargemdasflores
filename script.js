@@ -32,7 +32,8 @@ const SHEETS = [
 // ===================================
 let allData = [];
 let filteredData = [];
-let currentItemsPerPage = 10; // ✅ NOVO: Controle de itens por página
+let currentItemsPerPage = 10; // ✅ Controle de itens por página
+
 let chartPendenciasNaoResolvidasUnidade = null;
 let chartUnidades = null;
 let chartEspecialidades = null;
@@ -40,6 +41,9 @@ let chartStatus = null;
 let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
+
+// ✅ NOVO GRÁFICO AO LADO DA PIZZA
+let chartTopStatus = null;
 
 // ===================================
 // FUNÇÃO AUXILIAR PARA BUSCAR VALOR DE COLUNA
@@ -66,12 +70,12 @@ function isPendenciaByUsuario(item) {
 // ===================================
 function isOrigemPendencias(item) {
   const origem = String(item?._origem || '').toUpperCase();
-  return origem.includes('PEND'); // pega "PENDÊNCIAS ..." (qualquer variação)
+  return origem.includes('PEND');
 }
 
 function isOrigemResolvidos(item) {
   const origem = String(item?._origem || '').toUpperCase();
-  return origem.includes('RESOLV'); // pega "RESOLVIDOS ..." (qualquer variação)
+  return origem.includes('RESOLV');
 }
 
 // ===================================
@@ -146,7 +150,7 @@ function setMultiSelectText(textId, selected, fallbackLabel) {
 }
 
 // ===================================
-// ✅ NOVO: CONTROLE DE ITENS POR PÁGINA
+// ✅ CONTROLE DE ITENS POR PÁGINA
 // ===================================
 function changeItemsPerPage() {
   const select = document.getElementById('itemsPerPage');
@@ -508,10 +512,10 @@ function updateCards() {
 }
 
 // ===================================
-// ✅ GRÁFICOS (SEM RESOLUTIVIDADE)
+// ✅ GRÁFICOS
 // ===================================
 function updateCharts() {
-  // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
+  // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
@@ -543,7 +547,7 @@ function updateCharts() {
 
   createHorizontalBarChart('chartUnidades', unidadesLabels, unidadesValues, '#48bb78');
 
-  // ✅ GRÁFICO DE ESPECIALIDADES - VERDE ESCURO (#065f46)
+  // ✅ ESPECIALIDADES
   const especialidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -558,7 +562,7 @@ function updateCharts() {
 
   createHorizontalBarChart('chartEspecialidades', especialidadesLabels, especialidadesValues, '#065f46');
 
-  // Gráfico de Status
+  // ✅ STATUS (barras mais largas)
   const statusCount = {};
   filteredData.forEach(item => {
     const status = item['Status'] || 'Não informado';
@@ -571,10 +575,13 @@ function updateCharts() {
 
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
 
-  // Gráfico de Pizza
+  // Pizza
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
 
-  // Pendências por Prestador
+  // ✅ NOVO: Top 5 Status (ao lado da pizza)
+  createTopStatusChart('chartTopStatus', statusLabels, statusValues);
+
+  // ✅ Pendências por Prestador (barras mais largas)
   const prestadorCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -589,7 +596,7 @@ function updateCharts() {
 
   createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
-  // Pendências por Mês
+  // ✅ Pendências por Mês (barras mais largas)
   const mesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -698,7 +705,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// GRÁFICO VERTICAL COM VALOR NO MEIO DA BARRA
+// ✅ GRÁFICO VERTICAL COM VALOR NO MEIO DA BARRA (BARRAS MAIS LARGAS)
 // ===================================
 function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -707,6 +714,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
   if (canvasId === 'chartPendenciasPrestador' && chartPendenciasPrestador) chartPendenciasPrestador.destroy();
   if (canvasId === 'chartPendenciasMes' && chartPendenciasMes) chartPendenciasMes.destroy();
 
+  // ✅ Mais largo (pedido)
   const chart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -717,9 +725,11 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
         backgroundColor: color,
         borderWidth: 0,
         borderRadius: 6,
-        barPercentage: 0.70,
-        categoryPercentage: 0.75,
-        maxBarThickness: 40
+
+        // 🔥 MAIS LARGO
+        barPercentage: 0.92,
+        categoryPercentage: 0.92,
+        maxBarThickness: 58
       }]
     },
     options: {
@@ -778,7 +788,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
 }
 
 // ===================================
-// GRÁFICO DE BARRAS VERTICAIS (STATUS)
+// ✅ GRÁFICO DE BARRAS VERTICAIS (STATUS) - BARRAS MAIS LARGAS
 // ===================================
 function createVerticalBarChart(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -796,9 +806,11 @@ function createVerticalBarChart(canvasId, labels, data, color) {
         backgroundColor: color,
         borderWidth: 0,
         borderRadius: 6,
-        barPercentage: 0.55,
-        categoryPercentage: 0.70,
-        maxBarThickness: 28
+
+        // 🔥 MAIS LARGO (pedido)
+        barPercentage: 0.90,
+        categoryPercentage: 0.90,
+        maxBarThickness: 52
       }]
     },
     options: {
@@ -852,6 +864,88 @@ function createVerticalBarChart(canvasId, labels, data, color) {
   });
 
   chartStatus = chart;
+}
+
+// ===================================
+// ✅ NOVO: TOP 5 STATUS (BARRA HORIZONTAL) - AO LADO DA PIZZA
+// ===================================
+function createTopStatusChart(canvasId, labels, data) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  if (chartTopStatus) chartTopStatus.destroy();
+
+  // Monta pares, ordena, pega top 5
+  const pairs = labels.map((l, i) => ({ label: l, value: data[i] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  const topLabels = pairs.map(p => p.label);
+  const topValues = pairs.map(p => p.value);
+
+  chartTopStatus = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: topLabels,
+      datasets: [{
+        label: 'Quantidade',
+        data: topValues,
+        backgroundColor: '#2563eb',
+        borderWidth: 0,
+        borderRadius: 6,
+        barPercentage: 0.85,
+        categoryPercentage: 0.90
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          titleFont: { size: 14, weight: 'bold' },
+          bodyFont: { size: 13 },
+          padding: 12,
+          cornerRadius: 8
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { font: { size: 12, weight: '600' }, color: '#4a5568' },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        },
+        y: {
+          ticks: { font: { size: 12, weight: '600' }, color: '#4a5568' },
+          grid: { display: false }
+        }
+      }
+    },
+    plugins: [{
+      id: 'topStatusValueLabel',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        const dataset = chart.data.datasets[0];
+
+        ctx.save();
+        ctx.fillStyle = '#111827';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        meta.data.forEach((bar, i) => {
+          const value = dataset.data[i];
+          ctx.fillText(String(value), bar.x + 8, bar.y);
+        });
+
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 // ===================================
@@ -980,7 +1074,6 @@ function updateTable() {
 
   const hoje = new Date();
 
-  // ✅ APLICAR LIMITE DE ITENS POR PÁGINA
   const displayData = currentItemsPerPage === -1 ? filteredData : filteredData.slice(0, currentItemsPerPage);
 
   displayData.forEach(item => {
@@ -1069,7 +1162,7 @@ function updateTable() {
   const total = allData.length;
   const showing = displayData.length;
   const filtered = filteredData.length;
-  
+
   if (currentItemsPerPage === -1) {
     footer.textContent = `Mostrando ${filtered} de ${total} registros`;
   } else {
