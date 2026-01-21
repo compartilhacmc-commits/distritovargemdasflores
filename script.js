@@ -62,12 +62,11 @@ function isPendenciaByUsuario(item) {
 }
 
 // ===================================
-// ✅ HELPERS DE ORIGEM (PENDÊNCIAS/RESOLVIDOS) - SEM MEXER NO PAINEL
+// ✅ HELPERS DE ORIGEM (NÃO MEXE EM PAINEL / SOMENTE LÓGICA)
 // ===================================
 function isOrigemPendencias(item) {
   return String(item?._origem || '').toUpperCase().includes('PENDÊNCIAS');
 }
-
 function isOrigemResolvidos(item) {
   return String(item?._origem || '').toUpperCase().includes('RESOLVIDOS');
 }
@@ -497,13 +496,13 @@ function updateCards() {
 }
 
 // ===================================
-// ✅ ATUALIZAR GRÁFICOS (CORES ALTERADAS)
+// ✅ ATUALIZAR GRÁFICOS (CORRIGIDO ORIGEM P/ VARGEM)
 // ===================================
 function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
-    // CORREÇÃO: antes estava 'PENDÊNCIAS ELDORADO' e zerava tudo.
+    // CORREÇÃO: antes era 'PENDÊNCIAS ELDORADO' e zerava tudo
     if (!isOrigemPendencias(item)) return;
     if (!isPendenciaByUsuario(item)) return;
 
@@ -1119,4 +1118,149 @@ function updateTable() {
       'Nº Prontuário',
       'N° Prontuário',
       'Numero Prontuário',
-      'Pront<span class="cursor">█</span>
+      'Prontuário',
+      'Prontuario'
+    ]);
+
+    const dataInicioStr = getColumnValue(item, [
+      'Data Início da Pendência',
+      'Data Inicio da Pendencia',
+      'Data Início Pendência',
+      'Data Inicio Pendencia'
+    ]);
+
+    const prazo15 = getColumnValue(item, [
+      'Data Final do Prazo (Pendência com 15 dias)',
+      'Data Final do Prazo (Pendencia com 15 dias)',
+      'Data Final Prazo 15d',
+      'Prazo 15 dias'
+    ]);
+
+    const email15 = getColumnValue(item, [
+      'Data do envio do Email (Prazo: Pendência com 15 dias)',
+      'Data do envio do Email (Prazo: Pendencia com 15 dias)',
+      'Data Envio Email 15d',
+      'Email 15 dias'
+    ]);
+
+    const prazo30 = getColumnValue(item, [
+      'Data Final do Prazo (Pendência com 30 dias)',
+      'Data Final do Prazo (Pendencia com 30 dias)',
+      'Data Final Prazo 30d',
+      'Prazo 30 dias'
+    ]);
+
+    const email30 = getColumnValue(item, [
+      'Data do envio do Email (Prazo: Pendência com 30 dias)',
+      'Data do envio do Email (Prazo: Pendencia com 30 dias)',
+      'Data Envio Email 30d',
+      'Email 30 dias'
+    ]);
+
+    const dataInicio = parseDate(dataInicioStr);
+    let isVencendo15 = false;
+
+    // CORREÇÃO: antes era origem === 'PENDÊNCIAS ELDORADO'
+    if (dataInicio && isOrigemPendencias(item)) {
+      const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
+      if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
+    }
+
+    row.innerHTML = `
+      <td>${origem}</td>
+      <td>${formatDate(dataSolicitacao)}</td>
+      <td>${prontuario}</td>
+      <td>${item['Telefone'] || '-'}</td>
+      <td>${item['Unidade Solicitante'] || '-'}</td>
+      <td>${item['Cbo Especialidade'] || '-'}</td>
+      <td>${formatDate(dataInicioStr)}</td>
+      <td>${item['Status'] || '-'}</td>
+      <td>${formatDate(prazo15)}</td>
+      <td>${formatDate(email15)}</td>
+      <td>${formatDate(prazo30)}</td>
+      <td>${formatDate(email30)}</td>
+    `;
+
+    if (isVencendo15) row.classList.add('row-vencendo-15');
+
+    tbody.appendChild(row);
+  });
+
+  const total = allData.length;
+  const showing = filteredData.length;
+  footer.textContent = `Mostrando de 1 até ${showing} de ${total} registros`;
+}
+
+// ===================================
+// FUNÇÕES AUXILIARES
+// ===================================
+function parseDate(dateString) {
+  if (!dateString || dateString === '-') return null;
+
+  let match = String(dateString).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (match) return new Date(match[3], match[2] - 1, match[1]);
+
+  match = String(dateString).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return new Date(match[1], match[2] - 1, match[3]);
+
+  return null;
+}
+
+function formatDate(dateString) {
+  if (!dateString || dateString === '-') return '-';
+
+  const date = parseDate(dateString);
+  if (!date || isNaN(date.getTime())) return dateString;
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
+// ===================================
+// ATUALIZAR DADOS
+// ===================================
+function refreshData() {
+  loadData();
+}
+
+// ===================================
+// DOWNLOAD EXCEL
+// ===================================
+function downloadExcel() {
+  if (filteredData.length === 0) {
+    alert('Não há dados para exportar.');
+    return;
+  }
+
+  const exportData = filteredData.map(item => ({
+    'Origem': item['_origem'] || '',
+    'Data Solicitação': getColumnValue(item, ['Data da Solicitação', 'Data Solicitação', 'Data da Solicitacao', 'Data Solicitacao'], ''),
+    'Nº Prontuário': getColumnValue(item, ['Nº Prontuário', 'N° Prontuário', 'Numero Prontuário', 'Prontuário', 'Prontuario'], ''),
+    'Telefone': item['Telefone'] || '',
+    'Unidade Solicitante': item['Unidade Solicitante'] || '',
+    'CBO Especialidade': item['Cbo Especialidade'] || '',
+    'Data Início Pendência': getColumnValue(item, ['Data Início da Pendência', 'Data Início Pendência', 'Data Inicio da Pendencia', 'Data Inicio Pendencia'], ''),
+    'Status': item['Status'] || '',
+    'Prestador': item['Prestador'] || '',
+    'Data Final Prazo 15d': getColumnValue(item, ['Data Final do Prazo (Pendência com 15 dias)', 'Data Final do Prazo (Pendencia com 15 dias)', 'Data Final Prazo 15d', 'Prazo 15 dias'], ''),
+    'Data Envio Email 15d': getColumnValue(item, ['Data do envio do Email (Prazo: Pendência com 15 dias)', 'Data do envio do Email (Prazo: Pendencia com 15 dias)', 'Data Envio Email 15d', 'Email 15 dias'], ''),
+    'Data Final Prazo 30d': getColumnValue(item, ['Data Final do Prazo (Pendência com 30 dias)', 'Data Final do Prazo (Pendencia com 30 dias)', 'Data Final Prazo 30d', 'Prazo 30 dias'], ''),
+    'Data Envio Email 30d': getColumnValue(item, ['Data do envio do Email (Prazo: Pendência com 30 dias)', 'Data do envio do Email (Prazo: Pendencia com 30 dias)', 'Data Envio Email 30d', 'Email 30 dias'], '')
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados Completos');
+
+  ws['!cols'] = [
+    { wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+    { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 20 },
+    { wch: 25 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }
+  ];
+
+  const hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
+}
