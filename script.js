@@ -504,7 +504,6 @@ function updateCards() {
 // ===================================
 function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
-  // CORREÇÃO: não depender de nome fixo em _origem (antes: 'PENDÊNCIAS RESSACA')
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
@@ -521,7 +520,7 @@ function updateCharts() {
 
   createHorizontalBarChart('chartPendenciasNaoResolvidasUnidade', pendenciasNRLabels, pendenciasNRValues, '#dc2626');
 
-  // Gráfico de Unidades
+  // Gráfico de Unidades (GERAL)
   const unidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -619,7 +618,9 @@ function updateCharts() {
 
 // ===================================
 // ✅ GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
-// ✅ CORRIGIDO PARA CONTAR PENDENTES E RESOLVIDOS SEPARADO (IGUAL AO ELDORADO)
+// ✅ CORRIGIDO: cálculo por DIFERENÇA entre:
+//    TOTAL (geral) e PENDENTES (não resolvidas)
+//    => RESOLVIDOS = TOTAL - PENDENTES
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -628,48 +629,59 @@ function createResolutividadeChart(canvasId, fieldName) {
   if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) chartResolutividadeUnidade.destroy();
   if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) chartResolutividadePrestador.destroy();
 
-  // ✅ Calcular estatísticas por unidade/prestador
+  // stats[key] = { total, pendentes }
   const stats = {};
 
-  // Mantido como no código referência: estatística real usando ALLDATA (não só filtrado)
+  // 1) TOTAL GERAL (pendências + resolvidos) por campo
+  //    (mantive allData como você já usava para "estatística real")
   allData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
 
     const valor = item[fieldName] || 'Não informado';
 
     if (!stats[valor]) {
-      stats[valor] = {
-        pendentes: 0,
-        resolvidos: 0
-      };
+      stats[valor] = { total: 0, pendentes: 0 };
     }
 
-    // ✅ Contar pendentes e resolvidos usando helpers (não depende de nome fixo)
-    if (isOrigemPendencias(item)) {
-      stats[valor].pendentes++;
-    } else if (isOrigemResolvidos(item)) {
-      stats[valor].resolvidos++;
-    }
+    stats[valor].total++;
   });
 
-  // Calcular total e taxa de resolutividade
+  // 2) PENDENTES (não resolvidas) por campo = somente origem PENDÊNCIAS...
+  allData.forEach(item => {
+    if (!isPendenciaByUsuario(item)) return;
+    if (!isOrigemPendencias(item)) return;
+
+    const valor = item[fieldName] || 'Não informado';
+
+    if (!stats[valor]) {
+      stats[valor] = { total: 0, pendentes: 0 };
+    }
+
+    stats[valor].pendentes++;
+  });
+
+  // 3) Derivar resolvidos e taxa
   const data = Object.keys(stats).map(key => {
+    const total = stats[key].total;
     const pendentes = stats[key].pendentes;
-    const resolvidos = stats[key].resolvidos;
-    const total = pendentes + resolvidos;
-    const taxa = total > 0 ? (resolvidos / total * 100) : 0;
+
+    // Segurança: nunca deixar pendentes > total (se acontecer por inconsistência de base)
+    const pendentesAjustado = Math.min(pendentes, total);
+
+    const resolvidos = Math.max(0, total - pendentesAjustado);
+    const taxa = total > 0 ? (resolvidos / total) * 100 : 0;
 
     return {
       label: key,
-      pendentes: pendentes,
-      resolvidos: resolvidos,
-      total: total,
-      taxa: taxa
+      pendentes: pendentesAjustado,
+      resolvidos,
+      total,
+      taxa
     };
   });
 
-  // Ordenar por taxa decrescente e pegar top 10
-  data.sort((a, b) => b.taxa - a.taxa);
+  // Ordenar por taxa desc (e depois por total desc para desempate)
+  data.sort((a, b) => (b.taxa - a.taxa) || (b.total - a.total));
 
   const top10 = data.slice(0, 10);
   const labels = top10.map(d => d.label);
@@ -1184,7 +1196,6 @@ function updateTable() {
     const dataInicio = parseDate(dataInicioStr);
     let isVencendo15 = false;
 
-    // CORREÇÃO: antes comparava origem === 'PENDÊNCIAS RESSACA' (nome não existe)
     if (dataInicio && isOrigemPendencias(item)) {
       const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
       if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
@@ -1288,4 +1299,3 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
 }
-
