@@ -318,6 +318,11 @@ body {
     box-shadow: var(--sombra-md);
 }
 
+/* ✅ PIZZA OCUPA LARGURA TOTAL */
+.chart-box-full {
+    grid-column: 1 / -1;
+}
+
 .chart-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -327,21 +332,18 @@ body {
     border-bottom: 2px solid var(--cinza-200);
 }
 
-/* ✅ CORREÇÃO: ALTURA AUMENTADA PARA GRÁFICOS HORIZONTAIS */
 .chart-wrapper {
     position: relative;
     height: 520px;
     min-height: 450px;
 }
 
-/* ✅ Pizza com altura própria (mais bonita com legenda ao lado) */
 .chart-wrapper-pizza {
     position: relative;
     height: 450px;
     min-height: 400px;
 }
 
-/* ✅ Status vertical: deixa um pouco mais alto para caber rótulos */
 .chart-wrapper-status {
     height: 460px;
     min-height: 380px;
@@ -369,45 +371,7 @@ body {
 }
 
 /* ===================================
-   CAIXA DE PESQUISA
-=================================== */
-.search-box {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: var(--cinza-100);
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    border: 2px solid var(--azul-medio);
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.search-box:focus-within {
-    border-color: var(--azul-claro);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.search-box i {
-    color: var(--azul-medio);
-    font-size: 1.1rem;
-}
-
-.search-box input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 1rem;
-    color: var(--cinza-800);
-    outline: none;
-}
-
-.search-box input::placeholder {
-    color: var(--cinza-600);
-}
-
-/* ===================================
-   TABELA DE DADOS
+   ✅ NOVO ESTILO DE TABELA (BASEADO NAS IMAGENS)
 =================================== */
 .table-container {
     background: var(--branco);
@@ -417,58 +381,116 @@ body {
     margin-bottom: 2rem;
 }
 
+/* CAIXA DE PESQUISA - ESTILO MODERNO */
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #ffffff;
+    padding: 0.65rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.search-box:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-box i {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #1f2937;
+    outline: none;
+}
+
+.search-box input::placeholder {
+    color: #9ca3af;
+}
+
+/* WRAPPER DA TABELA */
 .table-wrapper {
     overflow-x: auto;
     margin-top: 1rem;
-    border: 1px solid var(--cinza-300);
-    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* TABELA - ESTILO DAS IMAGENS */
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    background: #ffffff;
 }
 
+/* CABEÇALHO DA TABELA - AZUL ESCURO */
 .data-table thead {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    color: var(--branco);
+    background: #1e3a8a;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .data-table th {
-    padding: 1rem 0.75rem;
+    padding: 0.95rem 0.85rem;
     text-align: left;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    color: #ffffff;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
     vertical-align: middle;
+    text-transform: uppercase;
 }
 
+.data-table th:last-child {
+    border-right: none;
+}
+
+/* CORPO DA TABELA */
 .data-table tbody tr {
-    border-bottom: 1px solid var(--cinza-300);
+    border-bottom: 1px solid #e5e7eb;
     transition: all 0.2s ease;
 }
 
 .data-table tbody tr:hover {
-    background: #e3f2fd;
+    background: #f0f9ff;
 }
 
+/* ALTERNÂNCIA DE CORES NAS LINHAS */
 .data-table tbody tr:nth-child(even) {
-    background: #fafbfc;
+    background: #f9fafb;
 }
 
 .data-table tbody tr:nth-child(even):hover {
-    background: #e3f2fd;
+    background: #f0f9ff;
 }
 
+/* CÉLULAS DA TABELA */
 .data-table td {
-    padding: 0.875rem 0.75rem;
-    color: var(--cinza-800);
-    border: 1px solid var(--cinza-300);
+    padding: 0.8rem 0.85rem;
+    color: #374151;
+    border-right: 1px solid #e5e7eb;
     vertical-align: middle;
     white-space: nowrap;
+    font-size: 0.875rem;
+}
+
+.data-table td:last-child {
+    border-right: none;
 }
 
 /* ✅ DESTAQUE AMARELO PARA LINHAS VENCENDO EM 15 DIAS */
@@ -481,21 +503,25 @@ body {
     background-color: #fde68a !important;
 }
 
+/* MENSAGEM DE CARREGAMENTO */
 .loading-message {
     text-align: center;
     padding: 3rem !important;
-    font-size: 1.1rem;
-    color: var(--azul-medio);
+    font-size: 1.05rem;
+    color: #2563eb;
     border: none !important;
+    font-weight: 500;
 }
 
+/* RODAPÉ DA TABELA */
 .table-footer {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 2px solid var(--cinza-200);
-    color: var(--cinza-600);
-    font-size: 0.9rem;
+    border-top: 2px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 0.875rem;
     font-weight: 600;
+    text-align: left;
 }
 
 /* ===================================
@@ -724,3 +750,6 @@ html {
 
 .ms-item input{ width: 16px; height: 16px; }
 .ms-item span{ font-size: 0.95rem; color: var(--cinza-800); }
+
+
+
