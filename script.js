@@ -617,7 +617,7 @@ function updateCharts() {
 }
 
 // ===================================
-// ✅ GRÁFICO DE RESOLUTIVIDADE (CORRIGIDO - MESMA LÓGICA DO ELDORADO)
+// ✅ GRÁFICO DE RESOLUTIVIDADE
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -631,7 +631,7 @@ function createResolutividadeChart(canvasId, fieldName) {
     chartResolutividadePrestador.destroy();
   }
 
-  // ✅ Calcular estatísticas por unidade/prestador (MESMA LÓGICA DO ELDORADO)
+  // ✅ Calcular estatísticas por unidade/prestador
   const stats = {};
 
   // Processar TODOS os dados (não apenas filtrados) para estatística real
@@ -647,10 +647,10 @@ function createResolutividadeChart(canvasId, fieldName) {
       };
     }
 
-    // Contar pendentes e resolvidos separadamente
-    if (isOrigemPendencias(item)) {
+    // Contar pendentes e resolvidos
+    if (item['_origem'] === 'PENDÊNCIAS ELDORADO') {
       stats[valor].pendentes++;
-    } else if (isOrigemResolvidos(item)) {
+    } else if (item['_origem'] === 'RESOLVIDOS ELDORADO') {
       stats[valor].resolvidos++;
     }
   });
@@ -677,7 +677,7 @@ function createResolutividadeChart(canvasId, fieldName) {
   const labels = top10.map(d => d.label);
   const taxas = top10.map(d => d.taxa);
 
-  // Criar gráfico
+  // ✅ gráfico com responsividade
   const chart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -731,7 +731,7 @@ function createResolutividadeChart(canvasId, fieldName) {
         },
         y: {
           ticks: {
-            font: { size: 12, weight: '500' },
+            font: { size: window.innerWidth < 768 ? 10 : 12, weight: '500' },
             color: '#4a5568',
             padding: 8
           },
@@ -749,7 +749,7 @@ function createResolutividadeChart(canvasId, fieldName) {
           if (!meta.hidden) {
             meta.data.forEach(function (element, index) {
               ctx.fillStyle = '#000000';
-              ctx.font = 'bold 13px Arial';
+              ctx.font = window.innerWidth < 768 ? 'bold 11px Arial' : 'bold 13px Arial';
               ctx.textAlign = 'left';
               ctx.textBaseline = 'middle';
 
@@ -765,6 +765,11 @@ function createResolutividadeChart(canvasId, fieldName) {
       }
     }]
   });
+
+  // Salvar referência
+  if (canvasId === 'chartResolutividadeUnidade') chartResolutividadeUnidade = chart;
+  if (canvasId === 'chartResolutividadePrestador') chartResolutividadePrestador = chart;
+}
 
   // Salvar referência
   if (canvasId === 'chartResolutividadeUnidade') chartResolutividadeUnidade = chart;
@@ -1292,3 +1297,4 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Vargem_das_Flores_${hoje}.xlsx`);
 }
+
