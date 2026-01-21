@@ -32,6 +32,7 @@ const SHEETS = [
 // ===================================
 let allData = [];
 let filteredData = [];
+let currentItemsPerPage = 10; // ✅ NOVO: Controle de itens por página
 let chartPendenciasNaoResolvidasUnidade = null;
 let chartUnidades = null;
 let chartEspecialidades = null;
@@ -39,8 +40,6 @@ let chartStatus = null;
 let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
-let chartResolutividadeUnidade = null;
-let chartResolutividadePrestador = null;
 
 // ===================================
 // FUNÇÃO AUXILIAR PARA BUSCAR VALOR DE COLUNA
@@ -144,6 +143,15 @@ function setMultiSelectText(textId, selected, fallbackLabel) {
   if (!selected || selected.length === 0) el.textContent = fallbackLabel;
   else if (selected.length === 1) el.textContent = selected[0];
   else el.textContent = `${selected.length} selecionados`;
+}
+
+// ===================================
+// ✅ NOVO: CONTROLE DE ITENS POR PÁGINA
+// ===================================
+function changeItemsPerPage() {
+  const select = document.getElementById('itemsPerPage');
+  currentItemsPerPage = parseInt(select.value);
+  updateTable();
 }
 
 // ===================================
@@ -500,7 +508,7 @@ function updateCards() {
 }
 
 // ===================================
-// ✅ GRÁFICOS
+// ✅ GRÁFICOS (SEM RESOLUTIVIDADE)
 // ===================================
 function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
@@ -610,174 +618,6 @@ function updateCharts() {
   const mesValues = mesLabels.map(l => mesCount[l]);
 
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
-
-  // ✅ RESOLUTIVIDADE CORRIGIDA
-  createResolutividadeChartCorreto('chartResolutividadeUnidade', 'Unidade Solicitante');
-  createResolutividadeChartCorreto('chartResolutividadePrestador', 'Prestador');
-}
-
-// ===================================
-// ✅ GRÁFICO DE RESOLUTIVIDADE (100% CORRIGIDO)
-// ===================================
-function createResolutividadeChartCorreto(canvasId, fieldName) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return;
-
-  // Destruir gráfico anterior
-  if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) {
-    chartResolutividadeUnidade.destroy();
-    chartResolutividadeUnidade = null;
-  }
-  if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) {
-    chartResolutividadePrestador.destroy();
-    chartResolutividadePrestador = null;
-  }
-
-  // ✅ LÓGICA CORRIGIDA: contar resolvidos e pendentes DIRETAMENTE
-  const stats = {};
-
-  // 1️⃣ Processar TODOS os dados (filteredData mantém coerência com outros gráficos)
-  filteredData.forEach(item => {
-    // Aplicar filtro de "usuário preenchido"
-    if (!isPendenciaByUsuario(item)) return;
-
-    const valor = item[fieldName] || 'Não informado';
-
-    // Inicializar se não existir
-    if (!stats[valor]) {
-      stats[valor] = { resolvidos: 0, pendentes: 0 };
-    }
-
-    // Contar baseado na origem
-    if (isOrigemResolvidos(item)) {
-      stats[valor].resolvidos++;
-    } else if (isOrigemPendencias(item)) {
-      stats[valor].pendentes++;
-    }
-  });
-
-  // 2️⃣ Calcular total e taxa
-  const data = Object.keys(stats).map(key => {
-    const resolvidos = stats[key].resolvidos || 0;
-    const pendentes = stats[key].pendentes || 0;
-    const total = resolvidos + pendentes;
-    const taxa = total > 0 ? (resolvidos / total) * 100 : 0;
-
-    return {
-      label: key,
-      resolvidos,
-      pendentes,
-      total,
-      taxa
-    };
-  });
-
-  // Filtrar apenas com dados válidos
-  const dataValida = data.filter(d => d.total > 0);
-
-  // Se não houver dados, não criar gráfico
-  if (dataValida.length === 0) {
-    console.warn(`Sem dados para ${canvasId}`);
-    return;
-  }
-
-  // Ordenar por taxa desc
-  dataValida.sort((a, b) => (b.taxa - a.taxa) || (b.total - a.total));
-
-  const top10 = dataValida.slice(0, 10);
-  const labels = top10.map(d => d.label);
-  const taxas = top10.map(d => d.taxa);
-
-  const chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Taxa de Resolutividade (%)',
-        data: taxas,
-        backgroundColor: '#10b981',
-        borderWidth: 0,
-        borderRadius: 4,
-        barPercentage: 0.75,
-        categoryPercentage: 0.85
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleFont: { size: 14, weight: 'bold' },
-          bodyFont: { size: 13 },
-          padding: 12,
-          cornerRadius: 8,
-          callbacks: {
-            label: function (context) {
-              const index = context.dataIndex;
-              const item = top10[index];
-              return [
-                `Taxa: ${item.taxa.toFixed(1)}%`,
-                `Resolvidos: ${item.resolvidos}`,
-                `Pendentes: ${item.pendentes}`,
-                `Total: ${item.total}`
-              ];
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          display: true,
-          max: 100,
-          grid: { display: true, color: 'rgba(0,0,0,0.05)' },
-          ticks: {
-            callback: function (value) { return value + '%'; }
-          }
-        },
-        y: {
-          ticks: {
-            font: { size: 12, weight: '500' },
-            color: '#4a5568',
-            padding: 8
-          },
-          grid: { display: false }
-        }
-      },
-      layout: { padding: { right: 60 } }
-    },
-    plugins: [{
-      id: 'resolutividadeLabels',
-      afterDatasetsDraw: function (chart) {
-        const ctx = chart.ctx;
-        chart.data.datasets.forEach(function (dataset, i) {
-          const meta = chart.getDatasetMeta(i);
-          if (!meta.hidden) {
-            meta.data.forEach(function (element, index) {
-              ctx.fillStyle = '#000000';
-              ctx.font = 'bold 13px Arial';
-              ctx.textAlign = 'left';
-              ctx.textBaseline = 'middle';
-
-              const item = top10[index];
-              const texto = `${item.taxa.toFixed(1)}% (${item.resolvidos}/${item.total})`;
-              const xPos = element.x + 10;
-              const yPos = element.y;
-
-              ctx.fillText(texto, xPos, yPos);
-            });
-          }
-        });
-      }
-    }]
-  });
-
-  // Salvar referência
-  if (canvasId === 'chartResolutividadeUnidade') chartResolutividadeUnidade = chart;
-  if (canvasId === 'chartResolutividadePrestador') chartResolutividadePrestador = chart;
 }
 
 // ===================================
@@ -1123,7 +963,7 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ATUALIZAR TABELA
+// ✅ ATUALIZAR TABELA COM PAGINAÇÃO
 // ===================================
 function updateTable() {
   const tbody = document.getElementById('tableBody');
@@ -1140,7 +980,10 @@ function updateTable() {
 
   const hoje = new Date();
 
-  filteredData.forEach(item => {
+  // ✅ APLICAR LIMITE DE ITENS POR PÁGINA
+  const displayData = currentItemsPerPage === -1 ? filteredData : filteredData.slice(0, currentItemsPerPage);
+
+  displayData.forEach(item => {
     const row = document.createElement('tr');
 
     const origem = item['_origem'] || '-';
@@ -1224,8 +1067,14 @@ function updateTable() {
   });
 
   const total = allData.length;
-  const showing = filteredData.length;
-  footer.textContent = `Mostrando de 1 até ${showing} de ${total} registros`;
+  const showing = displayData.length;
+  const filtered = filteredData.length;
+  
+  if (currentItemsPerPage === -1) {
+    footer.textContent = `Mostrando ${filtered} de ${total} registros`;
+  } else {
+    footer.textContent = `Mostrando de 1 até ${showing} de ${filtered} registros (Total geral: ${total})`;
+  }
 }
 
 // ===================================
