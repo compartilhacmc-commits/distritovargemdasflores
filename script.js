@@ -63,6 +63,19 @@ function isPendenciaByUsuario(item) {
 }
 
 // ===================================
+// ✅ HELPERS DE ORIGEM (CORREÇÃO PARA NÃO DEPENDER DE NOME FIXO)
+// ===================================
+function isOrigemPendencias(item) {
+  const origem = String(item?._origem || '').toUpperCase();
+  return origem.includes('PEND'); // pega "PENDÊNCIAS ..." (qualquer variação)
+}
+
+function isOrigemResolvidos(item) {
+  const origem = String(item?._origem || '').toUpperCase();
+  return origem.includes('RESOLV'); // pega "RESOLVIDOS ..." (qualquer variação)
+}
+
+// ===================================
 // MULTISELECT (CHECKBOX) HELPERS
 // ===================================
 function toggleMultiSelect(id) {
@@ -491,9 +504,10 @@ function updateCards() {
 // ===================================
 function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
+  // CORREÇÃO: não depender de nome fixo em _origem (antes: 'PENDÊNCIAS RESSACA')
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
-    if (item['_origem'] !== 'PENDÊNCIAS RESSACA') return;
+    if (!isOrigemPendencias(item)) return;
     if (!isPendenciaByUsuario(item)) return;
 
     const unidade = item['Unidade Solicitante'] || 'Não informado';
@@ -598,13 +612,14 @@ function updateCharts() {
 
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 
-  // ✅ RESOLUTIVIDADE
+  // ✅ RESOLUTIVIDADE (CORREÇÃO: respeitar filtros)
   createResolutividadeChart('chartResolutividadeUnidade', 'Unidade Solicitante');
   createResolutividadeChart('chartResolutividadePrestador', 'Prestador');
 }
 
 // ===================================
 // ✅ CRIAR GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
+// CORREÇÃO: usar filteredData (não allData) para precisão com filtros
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -615,7 +630,8 @@ function createResolutividadeChart(canvasId, fieldName) {
 
   const stats = {};
 
-  allData.forEach(item => {
+  // ✅ IMPORTANTE: respeitar filtros (filteredData)
+  filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
 
     const valor = item[fieldName] || 'Não informado';
@@ -623,7 +639,7 @@ function createResolutividadeChart(canvasId, fieldName) {
 
     stats[valor].total++;
 
-    if ((item['_origem'] || '').toUpperCase().includes('RESOLVIDOS')) {
+    if (isOrigemResolvidos(item)) {
       stats[valor].resolvidos++;
     }
   });
@@ -1150,7 +1166,8 @@ function updateTable() {
     const dataInicio = parseDate(dataInicioStr);
     let isVencendo15 = false;
 
-    if (dataInicio && origem === 'PENDÊNCIAS RESSACA') {
+    // CORREÇÃO: antes comparava origem === 'PENDÊNCIAS RESSACA' (nome não existe)
+    if (dataInicio && isOrigemPendencias(item)) {
       const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
       if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
     }
@@ -1253,6 +1270,3 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
-
-
-
