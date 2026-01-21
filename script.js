@@ -7,7 +7,7 @@ function gvizCsvUrl(sheetId, gid) {
 }
 
 // ===================================
-// CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
+// ✅ CONFIGURAÇÃO DA PLANILHA (NOVAS ABAS VARGEM DAS FLORES)
 // ===================================
 const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
 
@@ -19,7 +19,7 @@ const SHEETS = [
     tipo: 'PENDENTE'
   },
   {
-    name: 'RESOLVIDOS',
+    name: 'RESOLVIDOS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '451254610'),
     distrito: 'VARGEM DAS FLORES',
     tipo: 'RESOLVIDO'
@@ -492,7 +492,7 @@ function updateCharts() {
   // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE - VERMELHO (#dc2626)
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
-    if (item['_origem'] !== 'PENDÊNCIAS VARGEM DAS FLORES') return;
+    if (item['_origem'] !== 'PENDÊNCIAS ELDORADO') return;
     if (!isPendenciaByUsuario(item)) return;
 
     const unidade = item['Unidade Solicitante'] || 'Não informado';
@@ -1149,7 +1149,7 @@ function updateTable() {
     const dataInicio = parseDate(dataInicioStr);
     let isVencendo15 = false;
 
-    if (dataInicio && origem === 'PENDÊNCIAS VARGEM DAS FLORES') {
+    if (dataInicio && origem === 'PENDÊNCIAS ELDORADO') {
       const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
       if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
     }
@@ -1245,4 +1245,13 @@ function downloadExcel() {
 
   ws['!cols'] = [
     { wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-    { wch: 30 }, { wch: 30 }, { wch: 18
+    { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 20 },
+    { wch: 25 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }
+  ];
+
+  const hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
+}
+
+
+
