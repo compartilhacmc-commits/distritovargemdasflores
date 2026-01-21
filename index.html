@@ -154,7 +154,7 @@
             </button>
         </div>
 
-        <!-- Gráficos (SEM OS DOIS REMOVIDOS) -->
+        <!-- Gráficos -->
         <div class="charts-container">
             <!-- LINHA 1 -->
             <div class="chart-box">
@@ -201,12 +201,26 @@
                 </div>
             </div>
 
-            <!-- LINHA 4 - PIZZA (FULL WIDTH) -->
+            <!-- LINHA 4 - PIZZA + NOVO GRÁFICO AO LADO -->
             <div class="chart-box chart-box-full">
-                <h3 class="chart-title">Distribuição Percentual por Status</h3>
-                <div class="chart-wrapper chart-wrapper-pizza">
-                    <canvas id="chartPizzaStatus"></canvas>
+                <h3 class="chart-title">Distribuição por Status</h3>
+
+                <div class="charts-row-2">
+                    <div class="chart-half">
+                        <h4 class="chart-subtitle">Distribuição Percentual por Status</h4>
+                        <div class="chart-wrapper chart-wrapper-pizza">
+                            <canvas id="chartPizzaStatus"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-half">
+                        <h4 class="chart-subtitle">Top 5 Status (Ranking)</h4>
+                        <div class="chart-wrapper chart-wrapper-pizza">
+                            <canvas id="chartTopStatus"></canvas>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
 
