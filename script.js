@@ -16,13 +16,13 @@ const SHEETS = [
   {
     name: 'PENDÊNCIAS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '278071504'),
-    distrito: 'VARGEM DAS FLORES',
+    distrito: 'RESSACA',
     tipo: 'PENDENTE'
   },
   {
     name: 'RESOLVIDOS VARGEM DAS FLORES',
     url: gvizCsvUrl(SHEET_ID, '451254610'),
-    distrito: 'VARGEM DAS FLORES',
+    distrito: 'RESSACA',
     tipo: 'RESOLVIDO'
   }
 ];
@@ -612,13 +612,14 @@ function updateCharts() {
 
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 
-  // ✅ RESOLUTIVIDADE (CORREÇÃO: respeitar filtros)
+  // ✅ RESOLUTIVIDADE
   createResolutividadeChart('chartResolutividadeUnidade', 'Unidade Solicitante');
   createResolutividadeChart('chartResolutividadePrestador', 'Prestador');
 }
 
 // ===================================
 // ✅ GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
+// ✅ CORRIGIDO PARA CONTAR PENDENTES E RESOLVIDOS SEPARADO (IGUAL AO ELDORADO)
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -627,28 +628,47 @@ function createResolutividadeChart(canvasId, fieldName) {
   if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) chartResolutividadeUnidade.destroy();
   if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) chartResolutividadePrestador.destroy();
 
+  // ✅ Calcular estatísticas por unidade/prestador
   const stats = {};
 
+  // Mantido como no código referência: estatística real usando ALLDATA (não só filtrado)
   allData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
 
     const valor = item[fieldName] || 'Não informado';
-    if (!stats[valor]) stats[valor] = { total: 0, resolvidos: 0 };
 
-    stats[valor].total++;
+    if (!stats[valor]) {
+      stats[valor] = {
+        pendentes: 0,
+        resolvidos: 0
+      };
+    }
 
-    if ((item['_origem'] || '').toUpperCase().includes('RESOLVIDOS')) {
+    // ✅ Contar pendentes e resolvidos usando helpers (não depende de nome fixo)
+    if (isOrigemPendencias(item)) {
+      stats[valor].pendentes++;
+    } else if (isOrigemResolvidos(item)) {
       stats[valor].resolvidos++;
     }
   });
 
-  const data = Object.keys(stats).map(key => ({
-    label: key,
-    total: stats[key].total,
-    resolvidos: stats[key].resolvidos,
-    taxa: stats[key].total > 0 ? (stats[key].resolvidos / stats[key].total * 100) : 0
-  }));
+  // Calcular total e taxa de resolutividade
+  const data = Object.keys(stats).map(key => {
+    const pendentes = stats[key].pendentes;
+    const resolvidos = stats[key].resolvidos;
+    const total = pendentes + resolvidos;
+    const taxa = total > 0 ? (resolvidos / total * 100) : 0;
 
+    return {
+      label: key,
+      pendentes: pendentes,
+      resolvidos: resolvidos,
+      total: total,
+      taxa: taxa
+    };
+  });
+
+  // Ordenar por taxa decrescente e pegar top 10
   data.sort((a, b) => b.taxa - a.taxa);
 
   const top10 = data.slice(0, 10);
@@ -689,6 +709,7 @@ function createResolutividadeChart(canvasId, fieldName) {
               return [
                 `Taxa: ${item.taxa.toFixed(1)}%`,
                 `Resolvidos: ${item.resolvidos}`,
+                `Pendentes: ${item.pendentes}`,
                 `Total: ${item.total}`
               ];
             }
@@ -728,9 +749,8 @@ function createResolutividadeChart(canvasId, fieldName) {
               ctx.textAlign = 'left';
               ctx.textBaseline = 'middle';
 
-              const taxa = dataset.data[index];
               const item = top10[index];
-              const texto = `${taxa.toFixed(1)}% (${item.resolvidos}/${item.total})`;
+              const texto = `${item.taxa.toFixed(1)}% (${item.resolvidos}/${item.total})`;
               const xPos = element.x + 10;
               const yPos = element.y;
 
@@ -1268,8 +1288,3 @@ function downloadExcel() {
   const hoje = new Date().toISOString().split('T')[0];
   XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
 }
-
-
-
-
-
