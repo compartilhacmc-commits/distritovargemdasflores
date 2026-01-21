@@ -617,10 +617,8 @@ function updateCharts() {
 }
 
 // ===================================
-// ✅ GRÁFICO DE RESOLUTIVIDADE (HORIZONTAL COM %)
-// ✅ CORRIGIDO: cálculo por DIFERENÇA entre:
-//    TOTAL (geral) e PENDENTES (não resolvidas)
-//    => RESOLVIDOS = TOTAL - PENDENTES
+// ✅ GRÁFICO DE RESOLUTIVIDADE (CORRIGIDO)
+// ✅ Usa allData (SEM filtros) para estatísticas corretas
 // ===================================
 function createResolutividadeChart(canvasId, fieldName) {
   const ctx = document.getElementById(canvasId);
@@ -629,11 +627,10 @@ function createResolutividadeChart(canvasId, fieldName) {
   if (canvasId === 'chartResolutividadeUnidade' && chartResolutividadeUnidade) chartResolutividadeUnidade.destroy();
   if (canvasId === 'chartResolutividadePrestador' && chartResolutividadePrestador) chartResolutividadePrestador.destroy();
 
-  // stats[key] = { total, pendentes }
+  // ✅ CORREÇÃO PRINCIPAL: usar allData ao invés de filteredData
   const stats = {};
 
-  // 1) TOTAL GERAL (pendências + resolvidos) por campo
-  //    (mantive allData como você já usava para "estatística real")
+  // 1) Contar TOTAL (todas as abas, todos os registros com "Usuário" preenchido)
   allData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
 
@@ -646,7 +643,7 @@ function createResolutividadeChart(canvasId, fieldName) {
     stats[valor].total++;
   });
 
-  // 2) PENDENTES (não resolvidas) por campo = somente origem PENDÊNCIAS...
+  // 2) Contar PENDENTES (apenas aba PENDÊNCIAS com "Usuário" preenchido)
   allData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
     if (!isOrigemPendencias(item)) return;
@@ -660,14 +657,11 @@ function createResolutividadeChart(canvasId, fieldName) {
     stats[valor].pendentes++;
   });
 
-  // 3) Derivar resolvidos e taxa
+  // 3) Calcular resolvidos e taxa
   const data = Object.keys(stats).map(key => {
     const total = stats[key].total;
     const pendentes = stats[key].pendentes;
-
-    // Segurança: nunca deixar pendentes > total (se acontecer por inconsistência de base)
     const pendentesAjustado = Math.min(pendentes, total);
-
     const resolvidos = Math.max(0, total - pendentesAjustado);
     const taxa = total > 0 ? (resolvidos / total) * 100 : 0;
 
@@ -680,7 +674,7 @@ function createResolutividadeChart(canvasId, fieldName) {
     };
   });
 
-  // Ordenar por taxa desc (e depois por total desc para desempate)
+  // Ordenar por taxa desc
   data.sort((a, b) => (b.taxa - a.taxa) || (b.total - a.total));
 
   const top10 = data.slice(0, 10);
@@ -1255,7 +1249,7 @@ function formatDate(dateString) {
 }
 
 // ===================================
-// DADOS
+// REFRESH DADOS
 // ===================================
 function refreshData() {
   loadData();
