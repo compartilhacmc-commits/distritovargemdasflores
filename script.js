@@ -32,7 +32,7 @@ const SHEETS = [
 // ===================================
 let allData = [];
 let filteredData = [];
-let currentItemsPerPage = 10; // ✅ Controle de itens por página
+let currentItemsPerPage = 10;
 
 let chartPendenciasNaoResolvidasUnidade = null;
 let chartUnidades = null;
@@ -42,8 +42,8 @@ let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
 
-// ✅ NOVO GRÁFICO AO LADO DA PIZZA
-let chartTopStatus = null;
+// ✅ novo gráfico ao lado da pizza
+let chartTopUnidadesResolvem = null;
 
 // ===================================
 // FUNÇÃO AUXILIAR PARA BUSCAR VALOR DE COLUNA
@@ -66,7 +66,7 @@ function isPendenciaByUsuario(item) {
 }
 
 // ===================================
-// ✅ HELPERS DE ORIGEM (CORREÇÃO PARA NÃO DEPENDER DE NOME FIXO)
+// ✅ HELPERS DE ORIGEM
 // ===================================
 function isOrigemPendencias(item) {
   const origem = String(item?._origem || '').toUpperCase();
@@ -188,12 +188,9 @@ async function loadData() {
           csvText = csvText.replace(/^\uFEFF/, '');
 
           if (csvText.includes('<html') || csvText.includes('<!DOCTYPE')) {
-            throw new Error(
-              `Aba "${sheet.name}" retornou HTML (provável falta de permissão ou planilha não pública).`
-            );
+            throw new Error(`Aba "${sheet.name}" retornou HTML (provável falta de permissão).`);
           }
 
-          console.log(`Dados CSV da aba "${sheet.name}" recebidos`);
           return { name: sheet.name, csv: csvText };
         })
     );
@@ -203,13 +200,9 @@ async function loadData() {
     results.forEach(result => {
       const rows = parseCSV(result.csv);
 
-      if (rows.length < 2) {
-        console.warn(`Aba "${result.name}" está vazia ou sem dados`);
-        return;
-      }
+      if (rows.length < 2) return;
 
       const headers = rows[0].map(h => (h || '').trim());
-      console.log(`Cabeçalhos da aba "${result.name}":`, headers);
 
       const sheetData = rows.slice(1)
         .filter(row => row.length > 1 && (row[0] || '').trim() !== '')
@@ -222,12 +215,8 @@ async function loadData() {
           return obj;
         });
 
-      console.log(`${sheetData.length} registros carregados da aba "${result.name}"`);
       allData.push(...sheetData);
     });
-
-    console.log(`Total de registros carregados (ambas as abas): ${allData.length}`);
-    console.log('Primeiro registro completo:', allData[0]);
 
     if (allData.length === 0) {
       throw new Error('Nenhum dado foi carregado das planilhas');
@@ -237,8 +226,6 @@ async function loadData() {
 
     populateFilters();
     updateDashboard();
-
-    console.log('Dados carregados com sucesso!');
 
   } catch (error) {
     console.error('Erro ao carregar dados:', error);
@@ -309,7 +296,7 @@ function showLoading(show) {
 }
 
 // ===================================
-// ✅ POPULAR FILTROS (MULTISELECT + MÊS)
+// ✅ POPULAR FILTROS
 // ===================================
 function populateFilters() {
   const statusList = [...new Set(allData.map(item => item['Status']))].filter(Boolean).sort();
@@ -333,7 +320,7 @@ function populateFilters() {
 }
 
 // ===================================
-// ✅ POPULAR FILTRO DE MÊS (MULTISELECT STYLE)
+// ✅ POPULAR FILTRO DE MÊS
 // ===================================
 function populateMonthFilter() {
   const mesesSet = new Set();
@@ -364,7 +351,7 @@ function populateMonthFilter() {
 }
 
 // ===================================
-// ✅ APLICAR FILTROS (MULTISELECT + MÊS)
+// ✅ APLICAR FILTROS
 // ===================================
 function applyFilters() {
   const statusSel = getSelectedFromPanel('msStatusPanel');
@@ -412,7 +399,7 @@ function applyFilters() {
 }
 
 // ===================================
-// ✅ LIMPAR FILTROS (MULTISELECT + MÊS)
+// ✅ LIMPAR FILTROS
 // ===================================
 function clearFilters() {
   ['msStatusPanel', 'msUnidadePanel', 'msEspecialidadePanel', 'msPrestadorPanel', 'msMesPanel'].forEach(panelId => {
@@ -476,7 +463,7 @@ function updateDashboard() {
 }
 
 // ===================================
-// ✅ CARDS (CONTANDO POR "USUÁRIO" PREENCHIDO)
+// ✅ CARDS
 // ===================================
 function updateCards() {
   const total = allData.length;
@@ -515,7 +502,7 @@ function updateCards() {
 // ✅ GRÁFICOS
 // ===================================
 function updateCharts() {
-  // ✅ PENDÊNCIAS NÃO RESOLVIDAS POR UNIDADE
+  // Pendências não resolvidas por unidade
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
@@ -532,7 +519,7 @@ function updateCharts() {
 
   createHorizontalBarChart('chartPendenciasNaoResolvidasUnidade', pendenciasNRLabels, pendenciasNRValues, '#dc2626');
 
-  // Gráfico de Unidades (GERAL)
+  // Unidades (geral)
   const unidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -547,7 +534,7 @@ function updateCharts() {
 
   createHorizontalBarChart('chartUnidades', unidadesLabels, unidadesValues, '#48bb78');
 
-  // ✅ ESPECIALIDADES
+  // Especialidades
   const especialidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -562,26 +549,26 @@ function updateCharts() {
 
   createHorizontalBarChart('chartEspecialidades', especialidadesLabels, especialidadesValues, '#065f46');
 
-  // ✅ STATUS (barras mais largas)
+  // Status
   const statusCount = {};
   filteredData.forEach(item => {
     const status = item['Status'] || 'Não informado';
     statusCount[status] = (statusCount[status] || 0) + 1;
   });
 
-  const statusLabels = Object.keys(statusCount)
-    .sort((a, b) => statusCount[b] - statusCount[a]);
+  const statusLabels = Object.keys(statusCount).sort((a, b) => statusCount[b] - statusCount[a]);
   const statusValues = statusLabels.map(label => statusCount[label]);
 
+  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
 
   // Pizza
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
 
-  // ✅ NOVO: Top 5 Status (ao lado da pizza)
-  createTopStatusChart('chartTopStatus', statusLabels, statusValues);
+  // ✅ Novo gráfico ao lado: Top 5 Unidades que mais resolvem (somente RESOLVIDOS)
+  createTopUnidadesQueMaisResolvemChart('chartTopUnidadesResolvem');
 
-  // ✅ Pendências por Prestador (barras mais largas)
+  // Pendências por Prestador
   const prestadorCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -594,9 +581,10 @@ function updateCharts() {
     .slice(0, 50);
   const prestValues = prestLabels.map(l => prestadorCount[l]);
 
+  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
-  // ✅ Pendências por Mês (barras mais largas)
+  // Pendências por Mês
   const mesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -624,6 +612,7 @@ function updateCharts() {
     .slice(0, 50);
   const mesValues = mesLabels.map(l => mesCount[l]);
 
+  // ✅ BARRAS MAIS LARGAS (pedido)
   createVerticalBarChartCenteredValue('chartPendenciasMes', mesLabels, mesValues, '#0b2a6f');
 }
 
@@ -705,7 +694,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ GRÁFICO VERTICAL COM VALOR NO MEIO DA BARRA (BARRAS MAIS LARGAS)
+// ✅ GRÁFICO VERTICAL COM VALOR NO MEIO (BARRAS MAIS LARGAS)
 // ===================================
 function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -714,7 +703,6 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
   if (canvasId === 'chartPendenciasPrestador' && chartPendenciasPrestador) chartPendenciasPrestador.destroy();
   if (canvasId === 'chartPendenciasMes' && chartPendenciasMes) chartPendenciasMes.destroy();
 
-  // ✅ Mais largo (pedido)
   const chart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -726,7 +714,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
         borderWidth: 0,
         borderRadius: 6,
 
-        // 🔥 MAIS LARGO
+        // ✅ MAIS LARGO (pedido)
         barPercentage: 0.92,
         categoryPercentage: 0.92,
         maxBarThickness: 58
@@ -788,7 +776,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ GRÁFICO DE BARRAS VERTICAIS (STATUS) - BARRAS MAIS LARGAS
+// ✅ GRÁFICO VERTICAL (STATUS) - BARRAS MAIS LARGAS
 // ===================================
 function createVerticalBarChart(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -807,7 +795,7 @@ function createVerticalBarChart(canvasId, labels, data, color) {
         borderWidth: 0,
         borderRadius: 6,
 
-        // 🔥 MAIS LARGO (pedido)
+        // ✅ MAIS LARGO (pedido)
         barPercentage: 0.90,
         categoryPercentage: 0.90,
         maxBarThickness: 52
@@ -867,30 +855,42 @@ function createVerticalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ NOVO: TOP 5 STATUS (BARRA HORIZONTAL) - AO LADO DA PIZZA
+// ✅ NOVO: TOP 5 UNIDADES QUE MAIS RESOLVEM (somente aba RESOLVIDOS)
 // ===================================
-function createTopStatusChart(canvasId, labels, data) {
+function createTopUnidadesQueMaisResolvemChart(canvasId) {
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
-  if (chartTopStatus) chartTopStatus.destroy();
+  if (chartTopUnidadesResolvem) chartTopUnidadesResolvem.destroy();
 
-  // Monta pares, ordena, pega top 5
-  const pairs = labels.map((l, i) => ({ label: l, value: data[i] }))
+  const unidadeResolveCount = {};
+
+  filteredData.forEach(item => {
+    if (!isOrigemResolvidos(item)) return;   // ✅ só RESOLVIDOS
+    if (!isPendenciaByUsuario(item)) return; // mantém sua regra
+
+    const unidade = item['Unidade Solicitante'] || 'Não informado';
+    unidadeResolveCount[unidade] = (unidadeResolveCount[unidade] || 0) + 1;
+  });
+
+  const pairs = Object.keys(unidadeResolveCount)
+    .map(u => ({ label: u, value: unidadeResolveCount[u] }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  const topLabels = pairs.map(p => p.label);
-  const topValues = pairs.map(p => p.value);
+  const labels = pairs.map(p => p.label);
+  const values = pairs.map(p => p.value);
 
-  chartTopStatus = new Chart(ctx, {
+  const hasData = values.reduce((s, v) => s + v, 0) > 0;
+
+  chartTopUnidadesResolvem = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: topLabels,
+      labels: hasData ? labels : ['Sem dados (RESOLVIDOS)'],
       datasets: [{
-        label: 'Quantidade',
-        data: topValues,
-        backgroundColor: '#2563eb',
+        label: 'Resolvidos',
+        data: hasData ? values : [0],
+        backgroundColor: hasData ? '#10b981' : 'rgba(16,185,129,0.25)',
         borderWidth: 0,
         borderRadius: 6,
         barPercentage: 0.85,
@@ -904,7 +904,7 @@ function createTopStatusChart(canvasId, labels, data) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          enabled: true,
+          enabled: hasData,
           backgroundColor: 'rgba(0,0,0,0.85)',
           titleFont: { size: 14, weight: 'bold' },
           bodyFont: { size: 13 },
@@ -925,8 +925,10 @@ function createTopStatusChart(canvasId, labels, data) {
       }
     },
     plugins: [{
-      id: 'topStatusValueLabel',
+      id: 'valueLabelTopUnidadesResolvem',
       afterDatasetsDraw(chart) {
+        if (!hasData) return;
+
         const { ctx } = chart;
         const meta = chart.getDatasetMeta(0);
         const dataset = chart.data.datasets[0];
@@ -1057,7 +1059,7 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ✅ ATUALIZAR TABELA COM PAGINAÇÃO
+// ✅ ATUALIZAR TABELA
 // ===================================
 function updateTable() {
   const tbody = document.getElementById('tableBody');
