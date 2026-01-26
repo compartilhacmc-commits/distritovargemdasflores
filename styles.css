@@ -166,83 +166,61 @@ body {
 }
 
 /* ===================================
-   CARDS DE MÉTRICAS
+   CARDS DO TOPO (IGUAL AO ANEXO)
 =================================== */
-.cards-grid {
+.cards-grid-top{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.metric-card {
-    background: var(--branco);
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    box-shadow: var(--sombra-md);
-    transition: all 0.3s ease;
+.top-card{
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: 0 8px 18px rgba(17,24,39,0.10);
     position: relative;
-    overflow: hidden;
-}
-
-.metric-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: currentColor;
-}
-
-.metric-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--sombra-xl);
-}
-
-.card-primary { color: var(--azul-medio); }
-.card-primary::before { background: var(--azul-medio); }
-
-.card-warning { color: var(--amarelo); }
-.card-warning::before { background: var(--amarelo); }
-
-.card-danger { color: var(--vermelho); }
-.card-danger::before { background: var(--vermelho); }
-
-.card-info { color: var(--roxo); }
-.card-info::before { background: var(--roxo); }
-
-.card-icon {
-    width: 60px;
-    height: 60px;
+    min-height: 92px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    background: currentColor;
-    color: var(--branco);
-    border-radius: 12px;
-    font-size: 1.8rem;
-    opacity: 0.9;
 }
 
-.card-info h3 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--cinza-600);
-    margin-bottom: 0.5rem;
+.top-card::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:4px;
+    border-radius: 10px 0 0 10px;
+    background: #2563eb;
+}
+
+.top-card-label{
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #111827;
+    opacity: 0.80;
+    line-height: 1.25;
+    margin-bottom: 0.55rem;
 }
 
-.card-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--cinza-800);
+.top-card-value{
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: #111827;
     line-height: 1;
 }
+
+.top-card-blue::before{ background: #2563eb; }
+.top-card-green::before{ background: #10b981; }
+.top-card-orange::before{ background: #f59e0b; }
+.top-card-red::before{ background: #ef4444; }
+.top-card-purple::before{ background: #8b5cf6; }
 
 /* ===================================
    SEÇÃO DE FILTROS
@@ -296,7 +274,6 @@ body {
     box-shadow: var(--sombra-md);
 }
 
-/* ✅ BLOCO FULL */
 .chart-box-full {
     grid-column: 1 / -1;
 }
@@ -310,7 +287,6 @@ body {
     border-bottom: 2px solid var(--cinza-200);
 }
 
-/* ✅ SUBTÍTULO (novo) */
 .chart-subtitle{
     font-size: 0.95rem;
     font-weight: 800;
@@ -318,7 +294,6 @@ body {
     margin: 0.25rem 0 0.8rem;
 }
 
-/* ✅ NOVO LAYOUT: PIZZA + TOP STATUS LADO A LADO */
 .charts-row-2{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -333,7 +308,6 @@ body {
     padding: 1rem;
 }
 
-/* Alturas */
 .chart-wrapper {
     position: relative;
     height: 520px;
@@ -351,7 +325,6 @@ body {
     min-height: 380px;
 }
 
-/* Responsividade para gráficos */
 @media (max-width: 1200px) {
     .charts-container {
         grid-template-columns: 1fr;
@@ -368,18 +341,16 @@ body {
     .chart-wrapper {
         height: 400px;
     }
-
     .chart-wrapper-pizza {
         height: 360px;
     }
-
     .chart-wrapper-status {
         height: 380px;
     }
 }
 
 /* ===================================
-   ✅ NOVO ESTILO DE TABELA
+   TABELA
 =================================== */
 .table-container {
     background: var(--branco);
@@ -460,6 +431,56 @@ body {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* ===================================
+ PAGINAÇÃO (IGUAL AO ANEXO)
+=================================== */
+.pager{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    margin: 0.75rem 0 1.25rem;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 10px 20px rgba(17,24,39,0.12);
+}
+
+.pager-info{
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #1e3a8a;
+}
+
+.pager-btn{
+    padding: 0.75rem 1.6rem;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 1rem;
+    border: 2px solid #bfd3ff;
+    color: #8aa7e6;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.pager-btn:hover:not(:disabled){
+    transform: translateY(-1px);
+}
+
+.pager-btn:disabled{
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+.pager-btn-primary{
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+/* ===================================
+   TABELA (continua igual)
+=================================== */
 .table-wrapper {
     overflow-x: auto;
     margin-top: 1rem;
@@ -529,13 +550,14 @@ body {
     border-right: none;
 }
 
-.data-table tbody tr.row-vencendo-15 {
-    background-color: #fef3c7 !important;
+/* DESTAQUE AMARELO CLARO (>=26 dias desde Data Início) */
+.data-table tbody tr.row-alert-26 {
+    background-color: #fff7cc !important;
     font-weight: 600;
 }
 
-.data-table tbody tr.row-vencendo-15:hover {
-    background-color: #fde68a !important;
+.data-table tbody tr.row-alert-26:hover {
+    background-color: #ffefad !important;
 }
 
 .loading-message {
@@ -661,43 +683,27 @@ body {
         width: 100%;
         justify-content: center;
     }
-
-    .cards-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .filters-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* ===================================
    ANIMAÇÕES
 =================================== */
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.metric-card,
 .filters-container,
 .chart-box,
-.table-container {
+.table-container,
+.top-card{
     animation: fadeInUp 0.6s ease-out;
 }
 
 /* ===================================
    SCROLL SUAVE
 =================================== */
-html {
-    scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 /* ===================================
    MULTI SELECT (CHECKBOX)
