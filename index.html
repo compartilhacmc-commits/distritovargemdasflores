@@ -38,46 +38,31 @@
             </div>
         </div>
 
-        <!-- Cards de Métricas -->
-        <div class="cards-grid">
-            <div class="metric-card card-primary">
-                <div class="card-icon">
-                    <i class="fas fa-clipboard-list"></i>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-title">Total Geral de Registros</h3>
-                    <p class="card-value" id="totalPendencias">0</p>
-                </div>
+        <!-- Cards de Métricas (visual igual ao anexo) -->
+        <div class="cards-grid cards-grid-top">
+            <div class="top-card top-card-blue">
+                <div class="top-card-label">TOTAL DE PENDÊNCIAS - REGISTROS GERAL</div>
+                <div class="top-card-value" id="totalRegistrosGeral">0</div>
             </div>
 
-            <div class="metric-card card-warning">
-                <div class="card-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-title">Pendências Vencendo em 15 Dias</h3>
-                    <p class="card-value" id="pendencias15">0</p>
-                </div>
+            <div class="top-card top-card-green">
+                <div class="top-card-label">TOTAL DE PENDÊNCIAS<br>A RESPONDER</div>
+                <div class="top-card-value" id="totalPendencias">0</div>
             </div>
 
-            <div class="metric-card card-danger">
-                <div class="card-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-title">Pendências Vencendo em 30 Dias</h3>
-                    <p class="card-value" id="pendencias30">0</p>
-                </div>
+            <div class="top-card top-card-orange">
+                <div class="top-card-label">VENCENDO COM 15 DIAS (CONTANDO A PARTIR DA DATA DO INÍCIO DA PENDÊNCIA)</div>
+                <div class="top-card-value" id="pendencias15">0</div>
             </div>
 
-            <div class="metric-card card-info">
-                <div class="card-icon">
-                    <i class="fas fa-percentage"></i>
-                </div>
-                <div class="card-info">
-                    <h3 class="card-title">Porcentagem Filtrada</h3>
-                    <p class="card-value" id="percentFiltrados">100.0%</p>
-                </div>
+            <div class="top-card top-card-red">
+                <div class="top-card-label">VENCENDO COM 30 DIAS (CONTANDO A PARTIR DA DATA DO INÍCIO DA PENDÊNCIA)</div>
+                <div class="top-card-value" id="pendencias30">0</div>
+            </div>
+
+            <div class="top-card top-card-purple">
+                <div class="top-card-label">PORCENTAGEM<br>FILTRADA</div>
+                <div class="top-card-value" id="percentFiltrados">100.0%</div>
             </div>
         </div>
 
@@ -236,7 +221,7 @@
                 <input type="text" id="searchInput" placeholder="Pesquisar na tabela..." onkeyup="searchTable()">
             </div>
 
-            <!-- ✅ SELETOR DE ITENS POR PÁGINA -->
+            <!-- SELETOR DE ITENS POR PÁGINA -->
             <div class="pagination-controls">
                 <label for="itemsPerPage">Mostrar:</label>
                 <select id="itemsPerPage" onchange="changeItemsPerPage()">
@@ -247,6 +232,13 @@
                     <option value="-1">Todos</option>
                 </select>
                 <span>registros por página</span>
+            </div>
+
+            <!-- PAGINAÇÃO estilo do anexo -->
+            <div class="pager" id="pager">
+                <button class="pager-btn" id="btnPrev" onclick="goPrev()">Anterior</button>
+                <div class="pager-info" id="pagerInfo">Página 1 de 1</div>
+                <button class="pager-btn pager-btn-primary" id="btnNext" onclick="goNext()">Próximo</button>
             </div>
 
             <div class="table-wrapper">
@@ -284,7 +276,7 @@
 
     </div>
 
-    <!-- Rodapé -->
+   <!-- Rodapé -->
     <footer class="footer">
         <p>DIRETORIA DE REGULAÇÃO</p>
         <p>CENTRAL DE MARCAÇÃO DE CONSULTAS</p>
@@ -306,3 +298,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
