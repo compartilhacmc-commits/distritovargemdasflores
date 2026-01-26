@@ -34,6 +34,9 @@ let allData = [];
 let filteredData = [];
 let currentItemsPerPage = 10;
 
+// paginação estilo "Anterior / Página X de Y / Próximo"
+let currentPage = 1;
+
 let chartPendenciasNaoResolvidasUnidade = null;
 let chartUnidades = null;
 let chartEspecialidades = null;
@@ -41,8 +44,6 @@ let chartStatus = null;
 let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
 let chartPendenciasMes = null;
-
-// ✅ NOVO: gráfico de evolução temporal
 let chartEvolucaoTemporal = null;
 
 // ===================================
@@ -58,7 +59,7 @@ function getColumnValue(item, possibleNames, defaultValue = '-') {
 }
 
 // ===================================
-// ✅ REGRA DE PENDÊNCIA: COLUNA "USUÁRIO" PREENCHIDA
+// REGRA DE PENDÊNCIA: COLUNA "USUÁRIO" PREENCHIDA
 // ===================================
 function isPendenciaByUsuario(item) {
   const usuario = getColumnValue(item, ['Usuário', 'Usuario', 'USUÁRIO', 'USUARIO'], '');
@@ -66,7 +67,7 @@ function isPendenciaByUsuario(item) {
 }
 
 // ===================================
-// ✅ HELPERS DE ORIGEM
+// HELPERS DE ORIGEM
 // ===================================
 function isOrigemPendencias(item) {
   const origem = String(item?._origem || '').toUpperCase();
@@ -150,11 +151,12 @@ function setMultiSelectText(textId, selected, fallbackLabel) {
 }
 
 // ===================================
-// ✅ CONTROLE DE ITENS POR PÁGINA
+// CONTROLE DE ITENS POR PÁGINA
 // ===================================
 function changeItemsPerPage() {
   const select = document.getElementById('itemsPerPage');
   currentItemsPerPage = parseInt(select.value);
+  currentPage = 1;
   updateTable();
 }
 
@@ -167,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ===================================
-// ✅ CARREGAR DADOS DAS DUAS ABAS
+// CARREGAR DADOS DAS DUAS ABAS
 // ===================================
 async function loadData() {
   showLoading(true);
@@ -223,6 +225,7 @@ async function loadData() {
     }
 
     filteredData = [...allData];
+    currentPage = 1;
 
     populateFilters();
     updateDashboard();
@@ -296,7 +299,7 @@ function showLoading(show) {
 }
 
 // ===================================
-// ✅ POPULAR FILTROS
+//  POPULAR FILTROS
 // ===================================
 function populateFilters() {
   const statusList = [...new Set(allData.map(item => item['Status']))].filter(Boolean).sort();
@@ -320,7 +323,7 @@ function populateFilters() {
 }
 
 // ===================================
-// ✅ POPULAR FILTRO DE MÊS
+//  POPULAR FILTRO DE MÊS
 // ===================================
 function populateMonthFilter() {
   const mesesSet = new Set();
@@ -351,7 +354,7 @@ function populateMonthFilter() {
 }
 
 // ===================================
-// ✅ APLICAR FILTROS
+//  APLICAR FILTROS
 // ===================================
 function applyFilters() {
   const statusSel = getSelectedFromPanel('msStatusPanel');
@@ -395,11 +398,12 @@ function applyFilters() {
     return okStatus && okUnidade && okEsp && okPrest && okMes;
   });
 
+  currentPage = 1;
   updateDashboard();
 }
 
 // ===================================
-// ✅ LIMPAR FILTROS
+//  LIMPAR FILTROS
 // ===================================
 function clearFilters() {
   ['msStatusPanel', 'msUnidadePanel', 'msEspecialidadePanel', 'msPrestadorPanel', 'msMesPanel'].forEach(panelId => {
@@ -418,6 +422,8 @@ function clearFilters() {
   if (si) si.value = '';
 
   filteredData = [...allData];
+  currentPage = 1;
+
   updateDashboard();
 }
 
@@ -463,19 +469,21 @@ function updateDashboard() {
 }
 
 // ===================================
-// ✅ CARDS
+// CARDS (conforme solicitado)
 // ===================================
 function updateCards() {
-  const total = allData.length;
+  const totalGeral = allData.length;
   const filtrado = filteredData.length;
 
   const hoje = new Date();
+
+  // base: SOMENTE na aba PENDÊNCIAS + Usuário preenchido
+  const basePendenciasResponder = allData.filter(item => isOrigemPendencias(item) && isPendenciaByUsuario(item));
+
   let pendencias15 = 0;
   let pendencias30 = 0;
 
-  filteredData.forEach(item => {
-    if (!isPendenciaByUsuario(item)) return;
-
+  basePendenciasResponder.forEach(item => {
     const dataInicio = parseDate(getColumnValue(item, [
       'Data Início da Pendência',
       'Data Inicio da Pendencia',
@@ -483,26 +491,35 @@ function updateCards() {
       'Data Inicio Pendencia'
     ]));
 
-    if (dataInicio) {
-      const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
-      if (diasDecorridos >= 15 && diasDecorridos < 30) pendencias15++;
-      if (diasDecorridos >= 30) pendencias30++;
-    }
+    if (!dataInicio) return;
+
+    const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
+
+    // 15 dias: >=15 e <30
+    if (diasDecorridos >= 15 && diasDecorridos < 30) pendencias15++;
+
+    // 30 dias: >=30
+    if (diasDecorridos >= 30) pendencias30++;
   });
 
-  document.getElementById('totalPendencias').textContent = total;
+  // Total geral (todas abas)
+  const elTotalGeral = document.getElementById('totalRegistrosGeral');
+  if (elTotalGeral) elTotalGeral.textContent = totalGeral;
+
+  // Total pendências a responder (aba pendências + usuário preenchido)
+  document.getElementById('totalPendencias').textContent = basePendenciasResponder.length;
+
   document.getElementById('pendencias15').textContent = pendencias15;
   document.getElementById('pendencias30').textContent = pendencias30;
 
-  const percentFiltrados = total > 0 ? ((filtrado / total) * 100).toFixed(1) : '100.0';
+  const percentFiltrados = totalGeral > 0 ? ((filtrado / totalGeral) * 100).toFixed(1) : '100.0';
   document.getElementById('percentFiltrados').textContent = percentFiltrados + '%';
 }
 
 // ===================================
-// ✅ GRÁFICOS
+//  GRÁFICOS (mantidos)
 // ===================================
 function updateCharts() {
-  // Pendências não resolvidas por unidade
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
@@ -519,7 +536,6 @@ function updateCharts() {
 
   createHorizontalBarChart('chartPendenciasNaoResolvidasUnidade', pendenciasNRLabels, pendenciasNRValues, '#dc2626');
 
-  // Unidades (geral)
   const unidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -534,7 +550,6 @@ function updateCharts() {
 
   createHorizontalBarChart('chartUnidades', unidadesLabels, unidadesValues, '#48bb78');
 
-  // Especialidades
   const especialidadesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -549,7 +564,6 @@ function updateCharts() {
 
   createHorizontalBarChart('chartEspecialidades', especialidadesLabels, especialidadesValues, '#065f46');
 
-  // Status
   const statusCount = {};
   filteredData.forEach(item => {
     const status = item['Status'] || 'Não informado';
@@ -560,14 +574,9 @@ function updateCharts() {
   const statusValues = statusLabels.map(label => statusCount[label]);
 
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
-
-  // Pizza
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
-
-  // ✅ NOVO: Evolução Temporal de Pendências por Mês
   createEvolucaoTemporalChart('chartEvolucaoTemporal');
 
-  // Pendências por Prestador
   const prestadorCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -582,7 +591,6 @@ function updateCharts() {
 
   createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
-  // Pendências por Mês
   const mesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -691,7 +699,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ GRÁFICO VERTICAL COM VALOR NO MEIO (BARRAS MAIS LARGAS)
+// GRÁFICO VERTICAL COM VALOR NO MEIO
 // ===================================
 function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -771,7 +779,7 @@ function createVerticalBarChartCenteredValue(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ GRÁFICO VERTICAL (STATUS) - BARRAS MAIS LARGAS
+// GRÁFICO VERTICAL (STATUS)
 // ===================================
 function createVerticalBarChart(canvasId, labels, data, color) {
   const ctx = document.getElementById(canvasId);
@@ -848,7 +856,7 @@ function createVerticalBarChart(canvasId, labels, data, color) {
 }
 
 // ===================================
-// ✅ NOVO: GRÁFICO DE EVOLUÇÃO TEMPORAL (LINHA + ÁREA)
+// GRÁFICO DE EVOLUÇÃO TEMPORAL (LINHA + ÁREA)
 // ===================================
 function createEvolucaoTemporalChart(canvasId) {
   const ctx = document.getElementById(canvasId);
@@ -856,7 +864,6 @@ function createEvolucaoTemporalChart(canvasId) {
 
   if (chartEvolucaoTemporal) chartEvolucaoTemporal.destroy();
 
-  // Agregar dados por mês (somente pendências)
   const mesCountMap = {};
 
   filteredData.forEach(item => {
@@ -875,9 +882,8 @@ function createEvolucaoTemporalChart(canvasId) {
     }
   });
 
-  // Ordenar cronologicamente
   const mesesOrdenados = Object.keys(mesCountMap).sort();
-  
+
   const labels = mesesOrdenados.map(mesAno => {
     const [ano, mes] = mesAno.split('-');
     const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
@@ -937,8 +943,8 @@ function createEvolucaoTemporalChart(canvasId) {
       },
       scales: {
         x: {
-          ticks: { 
-            font: { size: 11, weight: '600' }, 
+          ticks: {
+            font: { size: 11, weight: '600' },
             color: '#4a5568',
             maxRotation: 45,
             minRotation: 25
@@ -947,8 +953,8 @@ function createEvolucaoTemporalChart(canvasId) {
         },
         y: {
           beginAtZero: true,
-          ticks: { 
-            font: { size: 12, weight: '600' }, 
+          ticks: {
+            font: { size: 12, weight: '600' },
             color: '#4a5568',
             precision: 0
           },
@@ -1072,8 +1078,48 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ✅ ATUALIZAR TABELA
+// ATUALIZAR TABELA + PAGINAÇÃO (Anterior / Página X de Y / Próximo)
 // ===================================
+function getTotalPages() {
+  if (currentItemsPerPage === -1) return 1;
+  return Math.max(1, Math.ceil(filteredData.length / currentItemsPerPage));
+}
+
+function updatePagerUI() {
+  const totalPages = getTotalPages();
+
+  const info = document.getElementById('pagerInfo');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+
+  if (info) info.textContent = `Página ${currentPage} de ${totalPages}`;
+
+  if (btnPrev) {
+    btnPrev.disabled = (currentPage <= 1 || totalPages <= 1 || currentItemsPerPage === -1);
+  }
+  if (btnNext) {
+    btnNext.disabled = (currentPage >= totalPages || totalPages <= 1 || currentItemsPerPage === -1);
+  }
+}
+
+function goPrev() {
+  const totalPages = getTotalPages();
+  if (currentPage > 1) {
+    currentPage--;
+    updateTable();
+  }
+  updatePagerUI();
+}
+
+function goNext() {
+  const totalPages = getTotalPages();
+  if (currentPage < totalPages) {
+    currentPage++;
+    updateTable();
+  }
+  updatePagerUI();
+}
+
 function updateTable() {
   const tbody = document.getElementById('tableBody');
   const footer = document.getElementById('tableFooter');
@@ -1084,12 +1130,25 @@ function updateTable() {
   if (filteredData.length === 0) {
     tbody.innerHTML = '<tr><td colspan="12" class="loading-message"><i class="fas fa-inbox"></i> Nenhum registro encontrado</td></tr>';
     footer.textContent = 'Mostrando 0 registros';
+    currentPage = 1;
+    updatePagerUI();
     return;
   }
 
   const hoje = new Date();
 
-  const displayData = currentItemsPerPage === -1 ? filteredData : filteredData.slice(0, currentItemsPerPage);
+  const totalPages = getTotalPages();
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  let displayData = [];
+
+  if (currentItemsPerPage === -1) {
+    displayData = filteredData;
+  } else {
+    const startIndex = (currentPage - 1) * currentItemsPerPage;
+    displayData = filteredData.slice(startIndex, startIndex + currentItemsPerPage);
+  }
 
   displayData.forEach(item => {
     const row = document.createElement('tr');
@@ -1146,14 +1205,6 @@ function updateTable() {
       'Email 30 dias'
     ]);
 
-    const dataInicio = parseDate(dataInicioStr);
-    let isVencendo15 = false;
-
-    if (dataInicio && isOrigemPendencias(item)) {
-      const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
-      if (diasDecorridos >= 15 && diasDecorridos < 30) isVencendo15 = true;
-    }
-
     row.innerHTML = `
       <td>${origem}</td>
       <td>${formatDate(dataSolicitacao)}</td>
@@ -1169,20 +1220,30 @@ function updateTable() {
       <td>${formatDate(email30)}</td>
     `;
 
-    if (isVencendo15) row.classList.add('row-vencendo-15');
+    // DESTAQUE AMARELO CLARO:
+    const dataInicio = parseDate(dataInicioStr);
+    if (dataInicio && isOrigemPendencias(item) && isPendenciaByUsuario(item)) {
+      const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
+      if (diasDecorridos >= 26) {
+        row.classList.add('row-alert-26');
+      }
+    }
 
     tbody.appendChild(row);
   });
 
   const total = allData.length;
-  const showing = displayData.length;
   const filtered = filteredData.length;
 
   if (currentItemsPerPage === -1) {
     footer.textContent = `Mostrando ${filtered} de ${total} registros`;
   } else {
-    footer.textContent = `Mostrando de 1 até ${showing} de ${filtered} registros (Total geral: ${total})`;
+    const start = (currentPage - 1) * currentItemsPerPage + 1;
+    const end = Math.min(currentPage * currentItemsPerPage, filtered);
+    footer.textContent = `Mostrando de ${start} até ${end} de ${filtered} registros (Total geral: ${total})`;
   }
+
+  updatePagerUI();
 }
 
 // ===================================
@@ -1256,5 +1317,5 @@ function downloadExcel() {
   ];
 
   const hoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dados_Vargem das Flores_${hoje}.xlsx`);
+  XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
 }
