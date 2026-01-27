@@ -166,7 +166,7 @@ body {
 }
 
 /* ===================================
-   CARDS DO TOPO (IGUAL AO ANEXO)
+   CARDS DO TOPO (VALORES CENTRALIZADOS)
 =================================== */
 .cards-grid-top{
     display: grid;
@@ -185,6 +185,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center; /* CENTRALIZA HORIZONTALMENTE */
+    text-align: center; /* CENTRALIZA O TEXTO */
 }
 
 .top-card::before{
@@ -207,6 +209,7 @@ body {
     opacity: 0.80;
     line-height: 1.25;
     margin-bottom: 0.55rem;
+    text-align: center; /* GARANTE CENTRALIZAÇÃO DO LABEL */
 }
 
 .top-card-value{
@@ -214,6 +217,7 @@ body {
     font-weight: 900;
     color: #111827;
     line-height: 1;
+    text-align: center; /* CENTRALIZA O VALOR */
 }
 
 .top-card-blue::before{ background: #2563eb; }
