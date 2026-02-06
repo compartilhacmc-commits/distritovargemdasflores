@@ -40,6 +40,7 @@ let currentPage = 1;
 let chartPendenciasNaoResolvidasUnidade = null;
 let chartUnidades = null;
 let chartEspecialidades = null;
+let chartEspecialidadesNaoResolvidas = null;
 let chartStatus = null;
 let chartPizzaStatus = null;
 let chartPendenciasPrestador = null;
@@ -469,57 +470,55 @@ function updateDashboard() {
 }
 
 // ===================================
-// CARDS (conforme solicitado)
+// CARDS (NOVOS)
 // ===================================
 function updateCards() {
   const totalGeral = allData.length;
   const filtrado = filteredData.length;
 
-  const hoje = new Date();
-
-  // base: SOMENTE na aba PENDÊNCIAS + Usuário preenchido
+  // Total pendências a responder (aba pendências + usuário preenchido)
   const basePendenciasResponder = allData.filter(item => isOrigemPendencias(item) && isPendenciaByUsuario(item));
 
-  let pendencias15 = 0;
-  let pendencias30 = 0;
+  // NOVO 1: Registros de Pendências Resolvidas (aba Resolvidos + usuário preenchido)
+  const pendenciasResolvidas = allData.filter(item => isOrigemResolvidos(item) && isPendenciaByUsuario(item));
 
-  basePendenciasResponder.forEach(item => {
-    const dataInicio = parseDate(getColumnValue(item, [
-      'Data Início da Pendência',
-      'Data Inicio da Pendencia',
-      'Data Início Pendência',
-      'Data Inicio Pendencia'
-    ]));
-
-    if (!dataInicio) return;
-
-    const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
-
-    // 15 dias: >=15 e <30
-    if (diasDecorridos >= 15 && diasDecorridos < 30) pendencias15++;
-
-    // 30 dias: >=30
-    if (diasDecorridos >= 30) pendencias30++;
+  // NOVO 2: Registros de Pendências Agendadas (aba Resolvidos + usuário + Status = "Agendado")
+  const pendenciasAgendadas = allData.filter(item => {
+    return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Agendado';
   });
 
-  // Total geral (todas abas)
+  // NOVO 3: Registros de Pendências Canceladas Por Vencimento do Prazo
+  // (aba Resolvidos + usuário + Status = "Cancelado/Vencimento do Prazo")
+  const pendenciasCanceladasVencimento = allData.filter(item => {
+    return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado/Vencimento do Prazo';
+  });
+
+  // NOVO 4: Registros de Pendências Canceladas/Geral (aba Resolvidos + usuário + Status = "Cancelado")
+  const pendenciasCanceladasGeral = allData.filter(item => {
+    return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado';
+  });
+
+  // Atualizar cards
   const elTotalGeral = document.getElementById('totalRegistrosGeral');
   if (elTotalGeral) elTotalGeral.textContent = totalGeral;
 
-  // Total pendências a responder (aba pendências + usuário preenchido)
   document.getElementById('totalPendencias').textContent = basePendenciasResponder.length;
-
-  document.getElementById('pendencias15').textContent = pendencias15;
-  document.getElementById('pendencias30').textContent = pendencias30;
+  document.getElementById('pendenciasResolvidas').textContent = pendenciasResolvidas.length;
+  document.getElementById('pendenciasAgendadas').textContent = pendenciasAgendadas.length;
+  document.getElementById('pendenciasCanceladasVencimento').textContent = pendenciasCanceladasVencimento.length;
+  document.getElementById('pendenciasCanceladasGeral').textContent = pendenciasCanceladasGeral.length;
 
   const percentFiltrados = totalGeral > 0 ? ((filtrado / totalGeral) * 100).toFixed(1) : '100.0';
   document.getElementById('percentFiltrados').textContent = percentFiltrados + '%';
 }
 
 // ===================================
-//  GRÁFICOS (mantidos)
+//  GRÁFICOS
 // ===================================
 function updateCharts() {
+  // -----------------------------------
+  // Pendências Não Resolvidas por Unidade (aba Pendências + usuário)
+  // -----------------------------------
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
     if (!isOrigemPendencias(item)) return;
@@ -536,34 +535,69 @@ function updateCharts() {
 
   createHorizontalBarChart('chartPendenciasNaoResolvidasUnidade', pendenciasNRLabels, pendenciasNRValues, '#dc2626');
 
-  const unidadesCount = {};
+  // -----------------------------------
+  // MUDANÇA 1: Registros de Pendências Resolvidas por Unidade
+  // (aba Resolvidos + usuário preenchido)
+  // -----------------------------------
+  const unidadesResolvidasCount = {};
   filteredData.forEach(item => {
+    if (!isOrigemResolvidos(item)) return;
     if (!isPendenciaByUsuario(item)) return;
+    
     const unidade = item['Unidade Solicitante'] || 'Não informado';
-    unidadesCount[unidade] = (unidadesCount[unidade] || 0) + 1;
+    unidadesResolvidasCount[unidade] = (unidadesResolvidasCount[unidade] || 0) + 1;
   });
 
-  const unidadesLabels = Object.keys(unidadesCount)
-    .sort((a, b) => unidadesCount[b] - unidadesCount[a])
+  const unidadesResolvidasLabels = Object.keys(unidadesResolvidasCount)
+    .sort((a, b) => unidadesResolvidasCount[b] - unidadesResolvidasCount[a])
     .slice(0, 50);
-  const unidadesValues = unidadesLabels.map(label => unidadesCount[label]);
+  const unidadesResolvidasValues = unidadesResolvidasLabels.map(label => unidadesResolvidasCount[label]);
 
-  createHorizontalBarChart('chartUnidades', unidadesLabels, unidadesValues, '#48bb78');
+  createHorizontalBarChart('chartUnidades', unidadesResolvidasLabels, unidadesResolvidasValues, '#48bb78');
 
-  const especialidadesCount = {};
+  // -----------------------------------
+  // MUDANÇA 2: Registros de Pendências Resolvidas por Especialidade
+  // (aba Resolvidos + usuário preenchido)
+  // -----------------------------------
+  const especialidadesResolvidasCount = {};
   filteredData.forEach(item => {
+    if (!isOrigemResolvidos(item)) return;
     if (!isPendenciaByUsuario(item)) return;
+    
     const especialidade = item['Cbo Especialidade'] || 'Não informado';
-    especialidadesCount[especialidade] = (especialidadesCount[especialidade] || 0) + 1;
+    especialidadesResolvidasCount[especialidade] = (especialidadesResolvidasCount[especialidade] || 0) + 1;
   });
 
-  const especialidadesLabels = Object.keys(especialidadesCount)
-    .sort((a, b) => especialidadesCount[b] - especialidadesCount[a])
+  const especialidadesResolvidasLabels = Object.keys(especialidadesResolvidasCount)
+    .sort((a, b) => especialidadesResolvidasCount[b] - especialidadesResolvidasCount[a])
     .slice(0, 50);
-  const especialidadesValues = especialidadesLabels.map(label => especialidadesCount[label]);
+  const especialidadesResolvidasValues = especialidadesResolvidasLabels.map(label => especialidadesResolvidasCount[label]);
 
-  createHorizontalBarChart('chartEspecialidades', especialidadesLabels, especialidadesValues, '#065f46');
+  createHorizontalBarChart('chartEspecialidades', especialidadesResolvidasLabels, especialidadesResolvidasValues, '#065f46');
 
+  // -----------------------------------
+  // Pendências Não Resolvidas por Especialidade
+  // (aba Pendências + usuário preenchido) + cor vermelho escuro
+  // -----------------------------------
+  const especialidadesNaoResolvidasCount = {};
+  filteredData.forEach(item => {
+    if (!isOrigemPendencias(item)) return;
+    if (!isPendenciaByUsuario(item)) return;
+
+    const especialidade = item['Cbo Especialidade'] || 'Não informado';
+    especialidadesNaoResolvidasCount[especialidade] = (especialidadesNaoResolvidasCount[especialidade] || 0) + 1;
+  });
+
+  const espNRLabels = Object.keys(especialidadesNaoResolvidasCount)
+    .sort((a, b) => especialidadesNaoResolvidasCount[b] - especialidadesNaoResolvidasCount[a])
+    .slice(0, 50);
+  const espNRValues = espNRLabels.map(label => especialidadesNaoResolvidasCount[label]);
+
+  createHorizontalBarChart('chartEspecialidadesNaoResolvidas', espNRLabels, espNRValues, '#7f1d1d');
+
+  // -----------------------------------
+  // Status
+  // -----------------------------------
   const statusCount = {};
   filteredData.forEach(item => {
     const status = item['Status'] || 'Não informado';
@@ -574,9 +608,20 @@ function updateCharts() {
   const statusValues = statusLabels.map(label => statusCount[label]);
 
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
+  
+  // -----------------------------------
+  // Pizza (agora ao lado do Mês)
+  // -----------------------------------
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
+  
+  // -----------------------------------
+  // Evolução Temporal (agora embaixo, full width)
+  // -----------------------------------
   createEvolucaoTemporalChart('chartEvolucaoTemporal');
 
+  // -----------------------------------
+  // Prestador
+  // -----------------------------------
   const prestadorCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -591,6 +636,9 @@ function updateCharts() {
 
   createVerticalBarChartCenteredValue('chartPendenciasPrestador', prestLabels, prestValues, '#4c1d95');
 
+  // -----------------------------------
+  // Mês
+  // -----------------------------------
   const mesCount = {};
   filteredData.forEach(item => {
     if (!isPendenciaByUsuario(item)) return;
@@ -631,6 +679,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
   if (canvasId === 'chartPendenciasNaoResolvidasUnidade' && chartPendenciasNaoResolvidasUnidade) chartPendenciasNaoResolvidasUnidade.destroy();
   if (canvasId === 'chartUnidades' && chartUnidades) chartUnidades.destroy();
   if (canvasId === 'chartEspecialidades' && chartEspecialidades) chartEspecialidades.destroy();
+  if (canvasId === 'chartEspecialidadesNaoResolvidas' && chartEspecialidadesNaoResolvidas) chartEspecialidadesNaoResolvidas.destroy();
 
   const chart = new Chart(ctx, {
     type: 'bar',
@@ -696,6 +745,7 @@ function createHorizontalBarChart(canvasId, labels, data, color) {
   if (canvasId === 'chartPendenciasNaoResolvidasUnidade') chartPendenciasNaoResolvidasUnidade = chart;
   if (canvasId === 'chartUnidades') chartUnidades = chart;
   if (canvasId === 'chartEspecialidades') chartEspecialidades = chart;
+  if (canvasId === 'chartEspecialidadesNaoResolvidas') chartEspecialidadesNaoResolvidas = chart;
 }
 
 // ===================================
@@ -1128,7 +1178,7 @@ function updateTable() {
   tbody.innerHTML = '';
 
   if (filteredData.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" class="loading-message"><i class="fas fa-inbox"></i> Nenhum registro encontrado</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="loading-message"><i class="fas fa-inbox"></i> Nenhum registro encontrado</td></tr>';
     footer.textContent = 'Mostrando 0 registros';
     currentPage = 1;
     updatePagerUI();
@@ -1209,7 +1259,6 @@ function updateTable() {
       <td>${origem}</td>
       <td>${formatDate(dataSolicitacao)}</td>
       <td>${prontuario}</td>
-      <td>${item['Telefone'] || '-'}</td>
       <td>${item['Unidade Solicitante'] || '-'}</td>
       <td>${item['Cbo Especialidade'] || '-'}</td>
       <td>${formatDate(dataInicioStr)}</td>
@@ -1220,7 +1269,8 @@ function updateTable() {
       <td>${formatDate(email30)}</td>
     `;
 
-    // DESTAQUE AMARELO CLARO:
+    // DESTAQUE AMARELO:
+    // somente Aba Pendências + Usuário preenchido + 26 dias desde "Data Início da Pendência"
     const dataInicio = parseDate(dataInicioStr);
     if (dataInicio && isOrigemPendencias(item) && isPendenciaByUsuario(item)) {
       const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
@@ -1294,7 +1344,6 @@ function downloadExcel() {
     'Origem': item['_origem'] || '',
     'Data Solicitação': getColumnValue(item, ['Data da Solicitação', 'Data Solicitação', 'Data da Solicitacao', 'Data Solicitacao'], ''),
     'Nº Prontuário': getColumnValue(item, ['Nº Prontuário', 'N° Prontuário', 'Numero Prontuário', 'Prontuário', 'Prontuario'], ''),
-    'Telefone': item['Telefone'] || '',
     'Unidade Solicitante': item['Unidade Solicitante'] || '',
     'CBO Especialidade': item['Cbo Especialidade'] || '',
     'Data Início Pendência': getColumnValue(item, ['Data Início da Pendência', 'Data Início Pendência', 'Data Inicio da Pendencia', 'Data Inicio Pendencia'], ''),
@@ -1311,9 +1360,18 @@ function downloadExcel() {
   XLSX.utils.book_append_sheet(wb, ws, 'Dados Completos');
 
   ws['!cols'] = [
-    { wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-    { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 20 },
-    { wch: 25 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }
+    { wch: 20 }, // Origem
+    { wch: 18 }, // Data Solicitação
+    { wch: 15 }, // Nº Prontuário
+    { wch: 30 }, // Unidade
+    { wch: 30 }, // Especialidade
+    { wch: 18 }, // Data início
+    { wch: 20 }, // Status
+    { wch: 25 }, // Prestador
+    { wch: 18 }, // Prazo 15
+    { wch: 20 }, // Email 15
+    { wch: 18 }, // Prazo 30
+    { wch: 20 }  // Email 30
   ];
 
   const hoje = new Date().toISOString().split('T')[0];
