@@ -17,6 +17,8 @@
     --amarelo: #f59e0b;
     --vermelho: #ef4444;
     --roxo: #8b5cf6;
+    --cinza: #6b7280;
+    --ciano: #06b6d4;
 
     --branco: #ffffff;
     --cinza-100: #f3f4f6;
@@ -185,8 +187,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; /* CENTRALIZA HORIZONTALMENTE */
-    text-align: center; /* CENTRALIZA O TEXTO */
+    align-items: center;
+    text-align: center;
 }
 
 .top-card::before{
@@ -209,7 +211,7 @@ body {
     opacity: 0.80;
     line-height: 1.25;
     margin-bottom: 0.55rem;
-    text-align: center; /* GARANTE CENTRALIZAÇÃO DO LABEL */
+    text-align: center;
 }
 
 .top-card-value{
@@ -217,7 +219,7 @@ body {
     font-weight: 900;
     color: #111827;
     line-height: 1;
-    text-align: center; /* CENTRALIZA O VALOR */
+    text-align: center;
 }
 
 .top-card-blue::before{ background: #2563eb; }
@@ -225,6 +227,8 @@ body {
 .top-card-orange::before{ background: #f59e0b; }
 .top-card-red::before{ background: #ef4444; }
 .top-card-purple::before{ background: #8b5cf6; }
+.top-card-gray::before{ background: #6b7280; }
+.top-card-cyan::before{ background: #06b6d4; }
 
 /* ===================================
    SEÇÃO DE FILTROS
@@ -262,7 +266,7 @@ body {
 }
 
 /* ===================================
-   GRÁFICOS
+   GRÁFICOS - MUDANÇA 3: REORGANIZAÇÃO DO LAYOUT
 =================================== */
 .charts-container {
     display: grid;
@@ -298,20 +302,6 @@ body {
     margin: 0.25rem 0 0.8rem;
 }
 
-.charts-row-2{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    align-items: stretch;
-}
-
-.chart-half{
-    background: rgba(59,130,246,0.04);
-    border: 1px solid rgba(59,130,246,0.10);
-    border-radius: 12px;
-    padding: 1rem;
-}
-
 .chart-wrapper {
     position: relative;
     height: 520px;
@@ -320,8 +310,8 @@ body {
 
 .chart-wrapper-pizza {
     position: relative;
-    height: 420px;
-    min-height: 380px;
+    height: 520px;
+    min-height: 450px;
 }
 
 .chart-wrapper-status {
@@ -329,14 +319,15 @@ body {
     min-height: 380px;
 }
 
-@media (max-width: 1200px) {
-    .charts-container {
-        grid-template-columns: 1fr;
-    }
+/* NOVO: Wrapper especial para Evolução Temporal (maior altura) */
+.chart-wrapper-evolucao {
+    position: relative;
+    height: 420px;
+    min-height: 380px;
 }
 
-@media (max-width: 900px){
-    .charts-row-2{
+@media (max-width: 1200px) {
+    .charts-container {
         grid-template-columns: 1fr;
     }
 }
@@ -350,6 +341,9 @@ body {
     }
     .chart-wrapper-status {
         height: 380px;
+    }
+    .chart-wrapper-evolucao {
+        height: 360px;
     }
 }
 
