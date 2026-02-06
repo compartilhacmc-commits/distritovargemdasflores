@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <!-- Cards de Métricas (visual igual ao anexo) -->
+        <!-- Cards de Métricas -->
         <div class="cards-grid cards-grid-top">
             <div class="top-card top-card-blue">
                 <div class="top-card-label">TOTAL DE PENDÊNCIAS - REGISTROS GERAL</div>
@@ -50,17 +50,27 @@
                 <div class="top-card-value" id="totalPendencias">0</div>
             </div>
 
+            <div class="top-card top-card-purple">
+                <div class="top-card-label">REGISTROS DE PENDÊNCIAS<br>RESOLVIDAS</div>
+                <div class="top-card-value" id="pendenciasResolvidas">0</div>
+            </div>
+
             <div class="top-card top-card-orange">
-                <div class="top-card-label">VENCENDO COM 15 DIAS (CONTANDO A PARTIR DA DATA DO INÍCIO DA PENDÊNCIA)</div>
-                <div class="top-card-value" id="pendencias15">0</div>
+                <div class="top-card-label">REGISTROS DE PENDÊNCIAS<br>AGENDADAS</div>
+                <div class="top-card-value" id="pendenciasAgendadas">0</div>
             </div>
 
             <div class="top-card top-card-red">
-                <div class="top-card-label">VENCENDO COM 30 DIAS (CONTANDO A PARTIR DA DATA DO INÍCIO DA PENDÊNCIA)</div>
-                <div class="top-card-value" id="pendencias30">0</div>
+                <div class="top-card-label">REGISTROS DE PENDÊNCIAS CANCELADAS POR VENCIMENTO DO PRAZO</div>
+                <div class="top-card-value" id="pendenciasCanceladasVencimento">0</div>
             </div>
 
-            <div class="top-card top-card-purple">
+            <div class="top-card top-card-gray">
+                <div class="top-card-label">REGISTROS DE PENDÊNCIAS<br>CANCELADAS/GERAL</div>
+                <div class="top-card-value" id="pendenciasCanceladasGeral">0</div>
+            </div>
+
+            <div class="top-card top-card-cyan">
                 <div class="top-card-label">PORCENTAGEM<br>FILTRADA</div>
                 <div class="top-card-value" id="percentFiltrados">100.0%</div>
             </div>
@@ -143,27 +153,35 @@
         <div class="charts-container">
             <!-- LINHA 1 -->
             <div class="chart-box">
-                <h3 class="chart-title">Registros Geral de Pendências por Unidade de Saúde</h3>
-                <div class="chart-wrapper">
-                    <canvas id="chartUnidades"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-box">
                 <h3 class="chart-title">Pendências Não Resolvidas por Unidade de Saúde</h3>
                 <div class="chart-wrapper">
                     <canvas id="chartPendenciasNaoResolvidasUnidade"></canvas>
                 </div>
             </div>
 
+            <div class="chart-box">
+                <h3 class="chart-title">Registros de Pendências Resolvidas por Unidade</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartUnidades"></canvas>
+                </div>
+            </div>
+
             <!-- LINHA 2 -->
             <div class="chart-box">
-                <h3 class="chart-title">Registros Geral de Pendências por Especialidade</h3>
+                <h3 class="chart-title">Registros de Pendências Resolvidas por Especialidade</h3>
                 <div class="chart-wrapper">
                     <canvas id="chartEspecialidades"></canvas>
                 </div>
             </div>
 
+            <div class="chart-box">
+                <h3 class="chart-title">Registros de Pendências Não Resolvidas por Especialidade</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartEspecialidadesNaoResolvidas"></canvas>
+                </div>
+            </div>
+
+            <!-- LINHA 3 -->
             <div class="chart-box">
                 <h3 class="chart-title">Registros por Status</h3>
                 <div class="chart-wrapper chart-wrapper-status">
@@ -171,7 +189,6 @@
                 </div>
             </div>
 
-            <!-- LINHA 3 -->
             <div class="chart-box">
                 <h3 class="chart-title">Quantidade de Pendências por Prestador</h3>
                 <div class="chart-wrapper">
@@ -179,6 +196,7 @@
                 </div>
             </div>
 
+            <!-- LINHA 4 - REORGANIZADA -->
             <div class="chart-box">
                 <h3 class="chart-title">Quantidade de Pendências por Mês</h3>
                 <div class="chart-wrapper">
@@ -186,26 +204,19 @@
                 </div>
             </div>
 
-            <!-- LINHA 4 - PIZZA + EVOLUÇÃO TEMPORAL -->
-            <div class="chart-box chart-box-full">
-                <h3 class="chart-title">Distribuição por Status</h3>
-
-                <div class="charts-row-2">
-                    <div class="chart-half">
-                        <h4 class="chart-subtitle">Distribuição Percentual por Status</h4>
-                        <div class="chart-wrapper chart-wrapper-pizza">
-                            <canvas id="chartPizzaStatus"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-half">
-                        <h4 class="chart-subtitle">Evolução Temporal de Pendências</h4>
-                        <div class="chart-wrapper chart-wrapper-pizza">
-                            <canvas id="chartEvolucaoTemporal"></canvas>
-                        </div>
-                    </div>
+            <div class="chart-box">
+                <h3 class="chart-title">Distribuição Percentual por Status</h3>
+                <div class="chart-wrapper chart-wrapper-pizza">
+                    <canvas id="chartPizzaStatus"></canvas>
                 </div>
+            </div>
 
+            <!-- LINHA 5 - EVOLUÇÃO TEMPORAL FULL WIDTH -->
+            <div class="chart-box chart-box-full">
+                <h3 class="chart-title">Evolução Temporal de Pendências</h3>
+                <div class="chart-wrapper chart-wrapper-evolucao">
+                    <canvas id="chartEvolucaoTemporal"></canvas>
+                </div>
             </div>
         </div>
 
@@ -248,7 +259,6 @@
                             <th>Origem</th>
                             <th>Data Solicitação</th>
                             <th>Nº Prontuário</th>
-                            <th>Telefone</th>
                             <th>Unidade Solicitante</th>
                             <th>CBO Especialidade</th>
                             <th>Data Início Pendência</th>
@@ -261,7 +271,7 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="12" class="loading-message">
+                            <td colspan="11" class="loading-message">
                                 <i class="fas fa-spinner fa-spin"></i> Carregando dados...
                             </td>
                         </tr>
@@ -276,7 +286,7 @@
 
     </div>
 
-   <!-- Rodapé -->
+    <!-- Rodapé -->
     <footer class="footer">
         <p>DIRETORIA DE REGULAÇÃO</p>
         <p>CENTRAL DE MARCAÇÃO DE CONSULTAS</p>
