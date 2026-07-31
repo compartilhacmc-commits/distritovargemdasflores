@@ -1,9 +1,8 @@
 // ===================================
-// FUNÇÃO: URL CSV (Google Sheets gviz) + ANTI-CACHE
+// FUNÇÃO: URL CSV (Google Sheets gviz) - SEM CACHE BUSTING
 // ===================================
 function gvizCsvUrl(sheetId, gid) {
-  const cacheBust = Date.now();
-  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}&_=${cacheBust}`;
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
 }
 
 // ===================================
@@ -1441,7 +1440,7 @@ function formatDate(dateString) {
 }
 
 // ===================================
-// DADOS
+// REFRESH DATA
 // ===================================
 function refreshData() {
   loadData();
