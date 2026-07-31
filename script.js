@@ -8,20 +8,20 @@ function gvizCsvUrl(sheetId, gid) {
 
 // ===================================
 // CONFIGURAÇÃO DA PLANILHA (DUAS ABAS)
+// NOVOS LINKS DO DISTRITO VARGEM DAS FLORES
 // ===================================
-// ✅ PLANILHA "VARGEM DAS FLORES"
-const SHEET_ID = '1IHknmxe3xAnfy5Bju_23B5ivIL-qMaaE6q_HuPaLBpk';
+const SHEET_ID = '1S-i9JgEXm1iRGxatGX8Sw05gaN9qiGGzuW6POSvSsf4';
 
 const SHEETS = [
   {
     name: 'PENDÊNCIAS VARGEM DAS FLORES',
-    url: gvizCsvUrl(SHEET_ID, '278071504'),
+    url: gvizCsvUrl(SHEET_ID, '195857617'),
     distrito: 'VARGEM DAS FLORES',
     tipo: 'PENDENTE'
   },
   {
     name: 'RESOLVIDOS VARGEM DAS FLORES',
-    url: gvizCsvUrl(SHEET_ID, '451254610'),
+    url: gvizCsvUrl(SHEET_ID, '175440536'),
     distrito: 'VARGEM DAS FLORES',
     tipo: 'RESOLVIDO'
   }
@@ -135,11 +135,12 @@ function debugColumns() {
 }
 
 // ===================================
-// REGRA DE PENDÊNCIA: COLUNA "USUÁRIO" PREENCHIDA
+// REGRA DE PENDÊNCIA: COLUNA "SOLICITAÇÃO" PREENCHIDA
+// (SUBSTITUI A VERIFICAÇÃO DE USUÁRIO)
 // ===================================
 function isPendenciaByUsuario(item) {
-  const usuario = getColumnValue(item, ['Usuário', 'Usuario', 'USUÁRIO', 'USUARIO'], '');
-  return !!(usuario && String(usuario).trim() !== '');
+  const solicitacao = getColumnValue(item, ['Solicitação', 'SOLICITAÇÃO', 'Solicitacao', 'solicitacao'], '');
+  return !!(solicitacao && String(solicitacao).trim() !== '');
 }
 
 // ===================================
@@ -554,24 +555,24 @@ function updateCards() {
   const totalGeral = allData.length;
   const filtrado = filteredData.length;
 
-  // Total pendências a responder (aba pendências + usuário preenchido)
+  // Total pendências a responder (aba pendências + solicitação preenchida)
   const basePendenciasResponder = allData.filter(item => isOrigemPendencias(item) && isPendenciaByUsuario(item));
 
-  // NOVO 1: Registros de Pendências Resolvidas (aba Resolvidos + usuário preenchido)
+  // Registros de Pendências Resolvidas (aba Resolvidos + solicitação preenchida)
   const pendenciasResolvidas = allData.filter(item => isOrigemResolvidos(item) && isPendenciaByUsuario(item));
 
-  // NOVO 2: Registros de Pendências Agendadas (aba Resolvidos + usuário + Status = "Agendado")
+  // Registros de Pendências Agendadas (aba Resolvidos + solicitação + Status = "Agendado")
   const pendenciasAgendadas = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Agendado';
   });
 
-  // NOVO 3: Registros de Pendências Canceladas Por Vencimento do Prazo
-  // (aba Resolvidos + usuário + Status = "Cancelado/Vencimento do Prazo")
+  // Registros de Pendências Canceladas Por Vencimento do Prazo
+  // (aba Resolvidos + solicitação + Status = "Cancelado/Vencimento do Prazo")
   const pendenciasCanceladasVencimento = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado/Vencimento do Prazo';
   });
 
-  // NOVO 4: Registros de Pendências Canceladas/Geral (aba Resolvidos + usuário + Status = "Cancelado")
+  // Registros de Pendências Canceladas/Geral (aba Resolvidos + solicitação + Status = "Cancelado")
   const pendenciasCanceladasGeral = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado';
   });
@@ -595,7 +596,7 @@ function updateCards() {
 // ===================================
 function updateCharts() {
   // -----------------------------------
-  // Pendências Não Resolvidas por Unidade (aba Pendências + usuário)
+  // Pendências Não Resolvidas por Unidade (aba Pendências + solicitação)
   // -----------------------------------
   const pendenciasNaoResolvidasUnidade = {};
   filteredData.forEach(item => {
@@ -615,7 +616,7 @@ function updateCharts() {
 
   // -----------------------------------
   // Registros de Pendências Resolvidas por Unidade
-  // (aba Resolvidos + usuário preenchido)
+  // (aba Resolvidos + solicitação preenchida)
   // -----------------------------------
   const unidadesResolvidasCount = {};
   filteredData.forEach(item => {
@@ -635,7 +636,7 @@ function updateCharts() {
 
   // -----------------------------------
   // Registros de Pendências Resolvidas por Especialidade
-  // (aba Resolvidos + usuário preenchido)
+  // (aba Resolvidos + solicitação preenchida)
   // -----------------------------------
   const especialidadesResolvidasCount = {};
   filteredData.forEach(item => {
@@ -655,7 +656,7 @@ function updateCharts() {
 
   // -----------------------------------
   // Pendências Não Resolvidas por Especialidade
-  // (aba Pendências + usuário preenchido) + cor vermelho escuro
+  // (aba Pendências + solicitação preenchida) + cor vermelho escuro
   // -----------------------------------
   const especialidadesNaoResolvidasCount = {};
   filteredData.forEach(item => {
@@ -693,7 +694,7 @@ function updateCharts() {
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
   
   // -----------------------------------
-  // Evolução Temporal (agora embaixo, full width)
+  // Evolução Temporal
   // -----------------------------------
   createEvolucaoTemporalChart('chartEvolucaoTemporal');
 
@@ -1206,8 +1207,7 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ATUALIZAR TABELA + PAGINAÇÃO (Anterior / Página X de Y / Próximo)
-// ADICIONADA A COLUNA "Nº Solicitação"
+// ATUALIZAR TABELA + PAGINAÇÃO
 // ===================================
 function getTotalPages() {
   if (currentItemsPerPage === -1) return 1;
@@ -1284,9 +1284,8 @@ function updateTable() {
 
     const origem = item['_origem'] || '-';
 
-    // Busca o número da solicitação com a função melhorada
+    // Busca o número da solicitação
     const numeroSolicitacao = (() => {
-      // Tenta encontrar o valor da solicitação com a função melhorada
       const valor = getColumnValue(item, [
         'Solicitação',
         'SOLICITAÇÃO',
@@ -1304,12 +1303,10 @@ function updateTable() {
         'Numero Solicitacao'
       ], '-');
       
-      // Se encontrou um valor diferente de '-', retorna ele
       if (valor !== '-') {
         return valor;
       }
       
-      // Se não encontrou, tenta buscar qualquer coluna que contenha "solicita"
       const keys = Object.keys(item);
       for (let key of keys) {
         if (key.toLowerCase().includes('solicita') || key.toLowerCase().includes('solic') || key.toLowerCase().includes('nº')) {
@@ -1389,7 +1386,7 @@ function updateTable() {
     `;
 
     // DESTAQUE AMARELO:
-    // somente Aba Pendências + Usuário preenchido + 26 dias desde "Data Início da Pendência"
+    // somente Aba Pendências + Solicitação preenchida + 26 dias desde "Data Início da Pendência"
     const dataInicio = parseDate(dataInicioStr);
     if (dataInicio && isOrigemPendencias(item) && isPendenciaByUsuario(item)) {
       const diasDecorridos = Math.floor((hoje - dataInicio) / (1000 * 60 * 60 * 24));
@@ -1451,7 +1448,7 @@ function refreshData() {
 }
 
 // ===================================
-// DOWNLOAD EXCEL (ATUALIZADO COM Nº SOLICITAÇÃO)
+// DOWNLOAD EXCEL
 // ===================================
 function downloadExcel() {
   if (filteredData.length === 0) {
@@ -1509,6 +1506,5 @@ function downloadExcel() {
   ];
 
   const hoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `Dados_Eldorado_${hoje}.xlsx`);
+  XLSX.writeFile(wb, `Dados_VargemDasFlores_${hoje}.xlsx`);
 }
-
