@@ -557,21 +557,21 @@ function updateCards() {
   // Total pendências a responder (aba pendências + solicitação preenchida)
   const basePendenciasResponder = allData.filter(item => isOrigemPendencias(item) && isPendenciaByUsuario(item));
 
-  // Registros de Pendências Resolvidas (aba Resolvidos + solicitação preenchida)
+  // NOVO 1: Registros de Pendências Resolvidas (aba Resolvidos + solicitação preenchida)
   const pendenciasResolvidas = allData.filter(item => isOrigemResolvidos(item) && isPendenciaByUsuario(item));
 
-  // Registros de Pendências Agendadas (aba Resolvidos + solicitação + Status = "Agendado")
+  // NOVO 2: Registros de Pendências Agendadas (aba Resolvidos + solicitação + Status = "Agendado")
   const pendenciasAgendadas = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Agendado';
   });
 
-  // Registros de Pendências Canceladas Por Vencimento do Prazo
+  // NOVO 3: Registros de Pendências Canceladas Por Vencimento do Prazo
   // (aba Resolvidos + solicitação + Status = "Cancelado/Vencimento do Prazo")
   const pendenciasCanceladasVencimento = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado/Vencimento do Prazo';
   });
 
-  // Registros de Pendências Canceladas/Geral (aba Resolvidos + solicitação + Status = "Cancelado")
+  // NOVO 4: Registros de Pendências Canceladas/Geral (aba Resolvidos + solicitação + Status = "Cancelado")
   const pendenciasCanceladasGeral = allData.filter(item => {
     return isOrigemResolvidos(item) && isPendenciaByUsuario(item) && item['Status'] === 'Cancelado';
   });
@@ -614,7 +614,7 @@ function updateCharts() {
   createHorizontalBarChart('chartPendenciasNaoResolvidasUnidade', pendenciasNRLabels, pendenciasNRValues, '#dc2626');
 
   // -----------------------------------
-  // Registros de Pendências Resolvidas por Unidade
+  // MUDANÇA 1: Registros de Pendências Resolvidas por Unidade
   // (aba Resolvidos + solicitação preenchida)
   // -----------------------------------
   const unidadesResolvidasCount = {};
@@ -634,7 +634,7 @@ function updateCharts() {
   createHorizontalBarChart('chartUnidades', unidadesResolvidasLabels, unidadesResolvidasValues, '#48bb78');
 
   // -----------------------------------
-  // Registros de Pendências Resolvidas por Especialidade
+  // MUDANÇA 2: Registros de Pendências Resolvidas por Especialidade
   // (aba Resolvidos + solicitação preenchida)
   // -----------------------------------
   const especialidadesResolvidasCount = {};
@@ -688,12 +688,12 @@ function updateCharts() {
   createVerticalBarChart('chartStatus', statusLabels, statusValues, '#f97316');
   
   // -----------------------------------
-  // Pizza
+  // Pizza (agora ao lado do Mês)
   // -----------------------------------
   createPieChart('chartPizzaStatus', statusLabels, statusValues);
   
   // -----------------------------------
-  // Evolução Temporal
+  // Evolução Temporal (agora embaixo, full width)
   // -----------------------------------
   createEvolucaoTemporalChart('chartEvolucaoTemporal');
 
@@ -1206,7 +1206,8 @@ function createPieChart(canvasId, labels, data) {
 }
 
 // ===================================
-// ATUALIZAR TABELA + PAGINAÇÃO
+// ATUALIZAR TABELA + PAGINAÇÃO (Anterior / Página X de Y / Próximo)
+// ADICIONADA A COLUNA "Nº Solicitação"
 // ===================================
 function getTotalPages() {
   if (currentItemsPerPage === -1) return 1;
@@ -1283,8 +1284,9 @@ function updateTable() {
 
     const origem = item['_origem'] || '-';
 
-    // Busca o número da solicitação
+    // Busca o número da solicitação com a função melhorada
     const numeroSolicitacao = (() => {
+      // Tenta encontrar o valor da solicitação com a função melhorada
       const valor = getColumnValue(item, [
         'Solicitação',
         'SOLICITAÇÃO',
@@ -1302,10 +1304,12 @@ function updateTable() {
         'Numero Solicitacao'
       ], '-');
       
+      // Se encontrou um valor diferente de '-', retorna ele
       if (valor !== '-') {
         return valor;
       }
       
+      // Se não encontrou, tenta buscar qualquer coluna que contenha "solicita"
       const keys = Object.keys(item);
       for (let key of keys) {
         if (key.toLowerCase().includes('solicita') || key.toLowerCase().includes('solic') || key.toLowerCase().includes('nº')) {
@@ -1440,14 +1444,14 @@ function formatDate(dateString) {
 }
 
 // ===================================
-// REFRESH DATA
+// DADOS
 // ===================================
 function refreshData() {
   loadData();
 }
 
 // ===================================
-// DOWNLOAD EXCEL
+// DOWNLOAD EXCEL (ATUALIZADO COM Nº SOLICITAÇÃO)
 // ===================================
 function downloadExcel() {
   if (filteredData.length === 0) {
@@ -1490,7 +1494,7 @@ function downloadExcel() {
 
   ws['!cols'] = [
     { wch: 20 }, // Origem
-    { wch: 15 }, // Nº Solicitação
+    { wch: 15 }, // Nº Solicitação (NOVA COLUNA)
     { wch: 18 }, // Data Solicitação
     { wch: 15 }, // Nº Prontuário
     { wch: 30 }, // Unidade
